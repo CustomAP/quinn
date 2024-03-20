@@ -18,7 +18,7 @@ def summarize_chat(user_phone_number):
 	}
 	
 	lambdaClient.invoke(
-		FunctionName="arn:aws:lambda:us-east-2:471112961630:function:summarizeChat",
+		FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-summarize_chat",
 		Payload=json.dumps(summarize_request)
 		)
 
