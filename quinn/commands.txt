@@ -1,0 +1,15 @@
+#init serverless:
+> serverless
+
+#invoke locally
+> serverless invoke local --stage dev -f <function_name>
+
+#invoke locally with params
+> serverless invoke local --stage dev -f init_chat -p functions/init_chat/payload.json 
+
+#deploy
+> serverless deploy --stage dev
+
+#install packages (for Ashish only)
+> /usr/local/bin/python3.12 -m pip install openai --break-system-packages
+> python3 -m pip install openai

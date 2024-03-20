@@ -1,0 +1,23 @@
+service: quinn-lambda-layers
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: python3.10
+  lambdaHashingVersion: 20201221
+  region: ${opt:region, 'us-east-2'}
+  environment:
+    stage: ${opt:stage, 'dev'}
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    layer:
+      name: python-openai
+      description: "Layer which contains openai library"
+      compatibleRuntimes:
+        - python3.10
