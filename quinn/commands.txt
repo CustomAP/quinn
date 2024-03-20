@@ -10,6 +10,9 @@
 #deploy
 > serverless deploy --stage dev
 
+#deploy single function
+> serverless deploy function -f functionName
+
 #install packages (for Ashish only)
 > /usr/local/bin/python3.12 -m pip install openai --break-system-packages
 > python3 -m pip install openai
