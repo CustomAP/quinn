@@ -2,56 +2,76 @@ import boto3
 import time
 
 sqs = boto3.client('sqs')
-aggregate_interval = 5
-last_reset_time = None
+aggregate_interval = 2
 
-def lambda_handler(event, context):
-    queue_url = event.get("user_phone_number")
-    messages = receive_messages_from_sqs(queue_url)
+def get_or_create_sqs_queue(chat_id):
+    queue_name = str(chat_id)
     
-    if messages:
-        reset_timer()
+    # Check if the queue exists
+    response = sqs.list_queues(QueueNamePrefix=queue_name)
+    if 'QueueUrls' in response:
+        # Queue already exists, return its URL
+        return response['QueueUrls'][0]
     else:
-        # No new messages, check if it's time to aggregate
-        if time_since_last_reset() >= aggregate_interval:
-            # Aggregate and process messages
-            aggregated_message = aggregate_messages_from_sqs()
-            if aggregated_message:
-                print("Aggregated message:", aggregated_message)
-                # Process the aggregated message
+        # Queue doesn't exist, create a new one
+        return create_sqs_queue(queue_name)
 
-def receive_messages_from_sqs():
+def create_sqs_queue(queue_name):
+    response = sqs.create_queue(
+        QueueName=queue_name,
+        Attributes={
+            'FifoQueue': 'true'
+        })
+    return response['QueueUrl']
+
+def send_message_to_sqs(queue_url, message):
+    response = sqs.send_message(
+        QueueUrl=queue_url,
+        MessageBody=message
+    )
+    print("Message sent to", queue_url, ":", message)
+
+def get_queue_size(queue_url):
+    response = sqs.get_queue_attributes(
+        QueueUrl=queue_url,
+        AttributeNames=['ApproximateNumberOfMessages']
+    )
+    return int(response['Attributes']['ApproximateNumberOfMessages'])
+
+def aggregate_messages_from_sqs(queue_url):
+    aggregated_message = ""
     response = sqs.receive_message(
         QueueUrl=queue_url,
-        MaxNumberOfMessages=1,
-        WaitTimeSeconds=0  # Non-blocking receive
+        MaxNumberOfMessages=10,
+        AttributeNames=['MessageAttributes'],
+        MessageAttributeNames=['All'],
+        WaitTimeSeconds=0
     )
     messages = response.get('Messages', [])
+    for message in messages:
+        aggregated_message += message['Body']
+    # Delete all messages from the queue after processing
     if messages:
-        print("New message received from SQS queue")
-    return messages
-
-def reset_timer():
-    global last_reset_time
-    last_reset_time = time.time()
-
-def time_since_last_reset():
-    global last_reset_time
-    if last_reset_time is None:
-        return float('inf')  # Return infinity if the timer has never been reset
-    return time.time() - last_reset_time
-
-def aggregate_messages_from_sqs():
-    aggregated_message = ""
-    while True:
-        messages = receive_messages_from_sqs()
-        if not messages:
-            break  # No more messages, stop aggregating
-        for message in messages:
-            aggregated_message += message['Body']
-            # Delete the message from the queue after processing
-            sqs.delete_message(
-                QueueUrl=queue_url,
-                ReceiptHandle=message['ReceiptHandle']
-            )
+        sqs.delete_message_batch(
+            QueueUrl=queue_url,
+            Entries=[{'Id': msg['MessageId'], 'ReceiptHandle': msg['ReceiptHandle']} for msg in messages]
+        )
     return aggregated_message
+
+def lambda_handler(event, context): 
+    queue_url = get_or_create_sqs_queue(event.get("user_phone_number"))
+
+    send_message_to_sqs(queue_url, event.get("msg_body"))
+
+    initial_size = get_queue_size(queue_url)
+
+    # Poll the size of the SQS queue after 2 seconds
+    time.sleep(2)
+    
+    current_size = get_queue_size(queue_url)
+
+    if current_size > initial_size:
+        print("Size increased from {} to {}. Terminating instance.".format(initial_size, current_size))
+    else:
+        aggregated_message = aggregate_messages_from_sqs(queue_url)
+        #call following logic using aggregated_message
