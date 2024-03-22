@@ -10,9 +10,11 @@ provider:
     role: arn:aws:iam::471112961630:role/LambdaRoleWithAccessToOtherServices
   environment:
     stage: ${opt:stage, 'dev'}
-    openai_env: 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
+    openai_access_key: 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
     WHATSAPP_TOKEN: EAAFpnO7WYJUBOZCxuArongDHvFFP6yZCmfdFTkhlbrGnqnky3ZBWlR6OQl8lLAUdq3jxGgroEUPUY7ZBWQar6aa5A5CcAZB0Jx1Kt2X323ZATzp2kCpOh8YK1CEh9YQurjTgXQNOGpmQ5rqlRy1aWpJ41iocPcBw3pLTVtcHiZBHfrCvvvVC1rYoDFBnxlnkLn14RIlApOn2mWvWFuxIPelbwZDZD
     VERIFY_TOKEN: QUINN
+    openai_organization_id: org-nQnTgti1i8GBtV2AImNwhkCW
+    quinn_assistant_id: os.environ.get("quinn_assistant_id")
 
 functions:
   hello:
@@ -49,6 +51,11 @@ functions:
   whatsapp_message_throttler:
     handler: functions/whatsapp_message_throttler/whatsapp_message_throttler.lambda_handler
     timeout: 30
+  test_prompt_engineering:
+    handler: functions/test/prompt_engineering/prompt_engineering.handler
+    timeout: 30
+    layers:
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
 
 plugins:
   - serverless-python-requirements

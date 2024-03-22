@@ -8,8 +8,8 @@ from botocore.exceptions import ClientError
 
 
 openAIClient = OpenAI(
-	api_key=os.environ.get("openai_env"),
-	organization='org-nQnTgti1i8GBtV2AImNwhkCW',
+    api_key=os.environ.get("openai_access_key"),
+    organization=os.environ.get("openai_organization_id"),
 )
 
 dynamodb = boto3.resource("dynamodb")
