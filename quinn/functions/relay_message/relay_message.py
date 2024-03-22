@@ -56,7 +56,7 @@ def lambda_handler(event, context):
                     
             messages = openAIClient.beta.threads.messages.list(thread_id=current_thread_id)
             response_message = messages.data[0].content[0].text.value
-            response_role = messages.data[1].role
+            response_role = messages.data[0].role
 
             request_message = messages.data[1].content[0].text.value
             request_role = messages.data[1].role

@@ -3,6 +3,8 @@ import os
 import time
 import boto3
 from botocore.exceptions import ClientError
+import json
+import logging
 
 
 openAIClient = OpenAI(
@@ -21,28 +23,25 @@ def lambda_handler(event, context):
             user = table.get_item(Key={"phone_number": phone_number})
             item = user['Item']
 
-            current_thread_id = item["current_thread_id"]
+            message_start_index = item["message_start_index"]
+            print(item["messages"][int(message_start_index):])
+
+            new_thread = openAIClient.beta.threads.create()
             
             openAIClient.beta.threads.messages.create(
-                thread_id = current_thread_id,
+                thread_id = new_thread.id,
                 role = "user",
-                content = '''
-Now create a summary of this conversation and vector embeddings of all topics that you (his friend) can use to hold conversation or go back to the next time.
-The summary should be in the format:
-Things user likes:
-Things user dislikes:
-Things user 
-'''
+                content = json.dumps(item["messages"][int(message_start_index):])
             )
             
             summary_run = openAIClient.beta.threads.runs.create(
-                thread_id = current_thread_id,
-                assistant_id =os.environ.get("quinn_assistant_id")
+                thread_id = new_thread.id,
+                assistant_id =os.environ.get("summarizor_assistant_id")
             )
             
             while True:
                 summary_run = openAIClient.beta.threads.runs.retrieve(
-                    thread_id=current_thread_id,
+                    thread_id=new_thread.id,
                     run_id=summary_run.id
                 ) 
     
@@ -51,7 +50,7 @@ Things user
                 else:
                     break
                     
-            summary_messages = openAIClient.beta.threads.messages.list(thread_id=current_thread_id)
+            summary_messages = openAIClient.beta.threads.messages.list(thread_id=new_thread.id)
             summary = summary_messages.data[0].content[0].text.value
             
             if "summaries" in user:
@@ -59,15 +58,6 @@ Things user
             else:
                 user["summaries"] = [summary]
                 
-            messages = []
-                
-            for i in range(10, 1, -1):
-                role = summary_messages.data[i].role
-                message = summary_messages.data[i].content[0].text.value
-                
-                messages.append({"role": role, "message": message})
-                
-            
             table.update_item(
                 Key={"phone_number": phone_number},
                 UpdateExpression="set summaries=:s",
@@ -86,7 +76,7 @@ Things user
                 'message': "No phone number sent in params"
             }
     except Exception as e:
-        print(e)
+        logging.exception("Exception occurred")
         return {
             'success': False,
             'message': str(e)
