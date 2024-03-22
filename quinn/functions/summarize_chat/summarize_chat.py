@@ -70,8 +70,8 @@ Things user
             
             table.update_item(
                 Key={"phone_number": phone_number},
-                UpdateExpression="set summaries=:s, messages=:m",
-                ExpressionAttributeValues={":s": user["summaries"], ":m" : messages}
+                UpdateExpression="set summaries=:s",
+                ExpressionAttributeValues={":s": user["summaries"]}
                 # UpdateExpression="set summaries=:s, current_thread_id=:t",
                 # ExpressionAttributeValues={":s": user["summaries"], ":t": ""}
             )

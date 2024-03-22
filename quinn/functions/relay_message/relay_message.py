@@ -9,6 +9,8 @@ openAIClient = OpenAI(
     organization=os.environ.get("openai_organization_id"),
 )
 
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table('users')
 
 lambdaClient = boto3.client("lambda")
 
@@ -19,8 +21,9 @@ def summarize_chat(user_phone_number):
     
     lambdaClient.invoke(
         FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-summarize_chat",
-        Payload=json.dumps(summarize_request)
-        )
+        Payload=json.dumps(summarize_request),
+        InvocationType="Event"
+    )
 
 def lambda_handler(event, context):
     try:
@@ -51,17 +54,40 @@ def lambda_handler(event, context):
                 else:
                     break
                     
-            response = openAIClient.beta.threads.messages.list(thread_id=current_thread_id)
-            model_message = response.data[0].content[0].text.value
-            
-            print(message_run.usage.total_tokens)
+            messages = openAIClient.beta.threads.messages.list(thread_id=current_thread_id)
+            response_message = messages.data[0].content[0].text.value
+            response_role = messages.data[1].role
+
+            request_message = messages.data[1].content[0].text.value
+            request_role = messages.data[1].role
+
+            replies = []
+            replies.append({
+                "role": request_role,
+                "message": request_message
+            })
+
+            replies.append({
+                "role": response_role,
+                "message": response_message
+            })
+
+            table.update_item(
+                Key={"phone_number": user_phone_number},
+                UpdateExpression="set messages=list_append(if_not_exists(messages, :emptylist), :m)",
+                ExpressionAttributeValues={
+                    ":m" : replies,
+                    ":emptylist": [] 
+                    }
+            )
             
             if message_run.usage.total_tokens > 2000:
+                print("Summarizing chat")
                 summarize_chat(user_phone_number)
             
             return {
                 "success": True,
-                "message": model_message
+                "message": response_message
             }
         else:
             return {
