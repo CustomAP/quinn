@@ -46,7 +46,21 @@ def handler(event, context):
                     
                 response = openAIClient.beta.threads.messages.list(thread_id=test_thread.id)
                 response_message = response.data[0].content[0].text.value
-                replies.append(response_message)
+                response_role = response.data[0].role
+
+                request_message = response.data[1].content[0].text.value
+                request_role = response.data[1].role
+                replies.append({
+                    "role": request_role,
+                    "message": request_message
+                })
+
+                replies.append({
+                    "role": response_role,
+                    "message": response_message
+                })
+
+            openAIClient.beta.assistants.delete(test_assistant.id)
             
             return {
                     "success": True,

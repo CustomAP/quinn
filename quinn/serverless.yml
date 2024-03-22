@@ -14,7 +14,7 @@ provider:
     WHATSAPP_TOKEN: EAAFpnO7WYJUBO1Pjt9Lhuhd6QJZC7DchPPsBx61M4hPJ8vOirj3pgl0Hdm9HzrPa6DI5pcJlV17bmUvsTtGZBanpEiMuNP0H3eHZCKl8Jz0ubn61sKE0xYgAAX8eO7fsNzPuy74agUHkbnXaNQY2ZAnjy0iyWeOBoIYyZBtqZCRwN1stPCvfGlZAh5RZCrcLfqQfx11uUy8EV4NoSsuhNpgZD
     VERIFY_TOKEN: QUINN
     openai_organization_id: org-nQnTgti1i8GBtV2AImNwhkCW
-    quinn_assistant_id: os.environ.get("quinn_assistant_id")
+    quinn_assistant_id: asst_JGVfvgYliLwfYcBag9inMPcQ
 
 functions:
   hello:

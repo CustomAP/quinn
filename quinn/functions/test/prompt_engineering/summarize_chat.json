@@ -10,7 +10,47 @@
     },
     {
       "role": "user",
-      "content": "summarize the chat"
+      "content": "going for shopping"
+    },
+    {
+      "role": "user",
+      "content": "Window shopping lol"
+    },
+    {
+      "role": "user",
+      "content": "Uniqlo"
+    },
+    {
+      "role": "user",
+      "content": "I usually go there"
+    },
+    {
+      "role": "user",
+      "content": "Cool tshirts. I like them. What about you?"
+    },
+    {
+      "role": "user",
+      "content": "Blue. What's yours?"
+    },
+    {
+      "role": "user",
+      "content": "Sky blue is the best to be honest. I hate olive green"
+    },
+    {
+      "role": "user",
+      "content": "May be black"
+    },
+    {
+      "role": "user",
+      "content": "I always avoid it"
+    },
+    {
+      "role": "user",
+      "content": "Not that i can think of"
+    },
+    {
+      "role": "user",
+      "content": "Now extract all the following from this conversation. (If not available, skip)\nThings the user likes:\nThings the user hates:\nThings the user did today:\nThings the user is going to do today:\nThings the user is going to do tommorrow or later:\nThings you should avoid talking about with the user:\nThings you should bring up in your next conversation (cliffhangers):\n"
     }
   ],
   "assistant": {
