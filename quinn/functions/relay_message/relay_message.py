@@ -56,6 +56,22 @@ def get_user_message(user_phone_number, user_message, is_new_thread):
         message = user_message
     return message
 
+def filter_message(message):
+    filter_request = {
+        "message": message
+    }
+    
+    filter_response = lambdaClient.invoke(
+        FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-filter_message",
+        Payload=json.dumps(filter_request)
+    )
+
+    filter_response_payload = json.load(filter_response["Payload"])
+    if filter_response_payload["success"]:
+        return filter_response_payload["message"]
+    else:
+        raise "Failed to filter message"
+
 def lambda_handler(event, context):
     try:
         if "user_message" in event and "current_thread_id" in event and "user_phone_number" in event and "is_new_thread" in event:
@@ -92,6 +108,8 @@ def lambda_handler(event, context):
             response_message = messages.data[0].content[0].text.value
             response_role = messages.data[0].role
 
+            filtered_message = filter_message(response_message)
+
             request_message = messages.data[1].content[0].text.value
             request_role = messages.data[1].role
 
@@ -103,7 +121,7 @@ def lambda_handler(event, context):
 
             replies.append({
                 "role": response_role,
-                "message": response_message
+                "message": filtered_message
             })
 
             table.update_item(
@@ -121,7 +139,7 @@ def lambda_handler(event, context):
             
             return {
                 "success": True,
-                "message": response_message
+                "message": filtered_message
             }
         else:
             return {
