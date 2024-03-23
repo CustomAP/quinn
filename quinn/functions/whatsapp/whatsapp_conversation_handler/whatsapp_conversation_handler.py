@@ -6,6 +6,7 @@ import time
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
+aggregate_interval = 2
 
 def send_error_response(phone_number_id, token, from_number):
     response = requests.post(
@@ -67,7 +68,6 @@ def relay_message(msg_body, current_thread_id, phone_number_id, token, from_numb
         )
     else:
        send_error_response(phone_number_id, token, from_number)
-       
 
 def get_or_create_sqs_queue(chat_id):
     queue_name = str(chat_id)
@@ -82,7 +82,11 @@ def get_or_create_sqs_queue(chat_id):
         return create_sqs_queue(queue_name)
 
 def create_sqs_queue(queue_name):
-    response = sqs.create_queue(QueueName=queue_name)
+    response = sqs.create_queue(
+        QueueName=queue_name,
+        Attributes={
+            'FifoQueue': 'true'
+        })
     return response['QueueUrl']
 
 def send_message_to_sqs(queue_url, message):
@@ -90,31 +94,27 @@ def send_message_to_sqs(queue_url, message):
         QueueUrl=queue_url,
         MessageBody=message
     )
-    print("Message sent to SQS queue:", message)
+    print("Message sent to", queue_url, ":", message)
 
-def receive_messages_from_sqs(queue_url):
-    response = sqs.receive_message(
+def get_queue_size(queue_url):
+    response = sqs.get_queue_attributes(
         QueueUrl=queue_url,
-        MaxNumberOfMessages=1,
-        WaitTimeSeconds=2  # Long polling for 2 seconds
+        AttributeNames=['ApproximateNumberOfMessages']
     )
-    messages = response.get('Messages', [])
-    if messages:
-        print("New message received from SQS queue")
-    return messages
+    return int(response['Attributes']['ApproximateNumberOfMessages'])
 
 def aggregate_messages_from_sqs(queue_url):
     aggregated_message = ""
     response = sqs.receive_message(
         QueueUrl=queue_url,
-        MaxNumberOfMessages=10,  # Adjust as per your requirement
+        MaxNumberOfMessages=10,
         AttributeNames=['MessageAttributes'],
         MessageAttributeNames=['All'],
-        WaitTimeSeconds=5  # Wait for 5 seconds to aggregate messages
+        WaitTimeSeconds=0
     )
     messages = response.get('Messages', [])
     for message in messages:
-        aggregated_message += message['Body']
+        aggregated_message = aggregated_message + " " + message['Body']
     # Delete all messages from the queue after processing
     if messages:
         sqs.delete_message_batch(
@@ -133,35 +133,26 @@ def lambda_handler(event, context):
                 body["entry"][0]["changes"][0].get("value").get("contacts")[0]["wa_id"]):
             phone_number_id, display_phone_number, from_number, msg_body, user_phone_number = extract_data(body)
             
-            # #SQS processing here
-            # queue_url = get_or_create_sqs_queue(user_phone_number)
+            queue_url = get_or_create_sqs_queue(user_phone_number)
+
+            send_message_to_sqs(queue_url, msg_body)
+
+            initial_size = get_queue_size(queue_url)
+
+            # Poll the size of the SQS queue after 2 seconds
+            time.sleep(aggregate_interval)
+    
+            current_size = get_queue_size(queue_url)
+
+            if current_size == initial_size:
+                aggregated_message = aggregate_messages_from_sqs(queue_url)
             
-            # # Wait for 2 seconds
-            # time.sleep(2)
+                init_response_payload = init_chat(user_phone_number)
             
-            # send_message_to_sqs(queue_url, msg_body)
-            
-            # # Start polling
-            # start_time = time.time()
-            # while time.time() - start_time < 5:
-            #     messages = receive_messages_from_sqs(queue_url)
-            #     if messages:
-            #         # New message received, reset timer and continue polling
-            #         start_time = time.time()
-            #     else:
-            #         # No new message received for 5 seconds, aggregate and process
-            #         aggregated_message = aggregate_messages_from_sqs(queue_url)
-            #         if aggregated_message:
-            #             print("Aggregated message:", aggregated_message)
-            #             # Process the aggregated message
-            #             break  # Exit the loop after processing
-            
-            init_response_payload = init_chat(user_phone_number)
-            
-            if init_response_payload["success"]:
-                relay_message(msg_body, init_response_payload["current_thread_id"], phone_number_id, token, from_number, user_phone_number, init_response_payload["is_new_thread"])
-            else:
-                send_error_response(phone_number_id, token, from_number)
+                if init_response_payload["success"]:
+                    relay_message(aggregated_message, init_response_payload["current_thread_id"], phone_number_id, token, from_number, user_phone_number, init_response_payload["is_new_thread"])
+                else:
+                    send_error_response(phone_number_id, token, from_number)
 
             return {
                 "statusCode": 200
