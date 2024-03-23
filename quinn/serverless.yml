@@ -16,6 +16,7 @@ provider:
     openai_organization_id: org-nQnTgti1i8GBtV2AImNwhkCW
     quinn_assistant_id: asst_JGVfvgYliLwfYcBag9inMPcQ
     summarizor_assistant_id: asst_TJTe1fdE8nVj07MNtuylfypi
+    filteror_assistant_id: asst_8kmEJ4jkBfq7Wj0JnWyjdABl
 
 functions:
   hello:
@@ -46,6 +47,11 @@ functions:
       - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p310-requests:9
   summarize_chat:
     handler: functions/summarize_chat/summarize_chat.lambda_handler
+    timeout: 30
+    layers:
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
+  filter_message:
+    handler: functions/filter_message/filter_message.handler
     timeout: 30
     layers:
       - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
