@@ -16,7 +16,6 @@ provider:
     openai_organization_id: org-nQnTgti1i8GBtV2AImNwhkCW
     quinn_assistant_id: asst_JGVfvgYliLwfYcBag9inMPcQ
     summarizor_assistant_id: asst_TJTe1fdE8nVj07MNtuylfypi
-    filteror_assistant_id: asst_8kmEJ4jkBfq7Wj0JnWyjdABl
 
 functions:
   hello:

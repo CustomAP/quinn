@@ -57,6 +57,7 @@ def get_user_message(user_phone_number, user_message, is_new_thread):
     return message
 
 def filter_message(message):
+    print("Message before filtering" + message)
     filter_request = {
         "message": message
     }
@@ -68,6 +69,7 @@ def filter_message(message):
 
     filter_response_payload = json.load(filter_response["Payload"])
     if filter_response_payload["success"]:
+        print("Message after filtering" + filter_response_payload["message"])
         return filter_response_payload["message"]
     else:
         raise "Failed to filter message"

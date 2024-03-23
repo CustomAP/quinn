@@ -9,10 +9,9 @@ openAIClient = OpenAI(
 )
 
 filteror_system_message ='''
-You are an assistant that converts "assistant/AI model" style lines to a human style sentence.
+You are an assistant that modifies a message as:
 If there are too many questions, make them one question.
-Make the reply shorter but do not destroy the information. Make sure all the information is still in the reply.
-Avoid phrases like "Feel free to", "I am here for you", "just let me know", etc.
+Remove phrases like "Feel free to", "I am here for you", "just let me know", "I'm here to listen and talk with you", "If there's anything you need" etc.
 '''
 
 def handler(event, context):
@@ -22,7 +21,7 @@ def handler(event, context):
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": filteror_system_message},
-                    {"role": "user", "content": event["message"]}
+                    {"role": "user", "content": f"Message to convert:\n{event['message']}"}
                 ]
             )
 

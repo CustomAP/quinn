@@ -58,7 +58,7 @@ def relay_message(msg_body, current_thread_id, phone_number_id, token, from_numb
     relay_response_payload = json.load(relay_response["Payload"])
     
     if relay_response_payload["success"]:
-        messages = re.findall('[^.?\n]+.?', relay_response_payload["message"])
+        messages = re.findall('[^.?!\n]+.?', relay_response_payload["message"])
 
         for message in messages:
             requests.post(
@@ -70,7 +70,7 @@ def relay_message(msg_body, current_thread_id, phone_number_id, token, from_numb
                 },
                 headers={"Content-Type": "application/json"}
             )
-            time.sleep(0.25)
+            time.sleep(2)
     else:
        send_error_response(phone_number_id, token, from_number)
 
