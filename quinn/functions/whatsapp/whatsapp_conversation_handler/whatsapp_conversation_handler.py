@@ -6,7 +6,7 @@ import time
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
-aggregate_interval = 2
+aggregate_interval = 3
 
 def send_error_response(phone_number_id, token, from_number):
     response = requests.post(
@@ -69,59 +69,56 @@ def relay_message(msg_body, current_thread_id, phone_number_id, token, from_numb
     else:
        send_error_response(phone_number_id, token, from_number)
 
-def get_or_create_sqs_queue(chat_id):
-    queue_name = str(chat_id)
+# def get_or_create_sqs_queue(chat_id):
+#     queue_name = str(chat_id)
     
-    # Check if the queue exists
-    response = sqs.list_queues(QueueNamePrefix=queue_name)
-    if 'QueueUrls' in response:
-        # Queue already exists, return its URL
-        return response['QueueUrls'][0]
-    else:
-        # Queue doesn't exist, create a new one
-        return create_sqs_queue(queue_name)
+#     # Check if the queue exists
+#     response = sqs.list_queues(QueueNamePrefix=queue_name)
+#     if 'QueueUrls' in response:
+#         # Queue already exists, return its URL
+#         return response['QueueUrls'][0]
+#     else:
+#         # Queue doesn't exist, create a new one
+#         return create_sqs_queue(queue_name)
 
-def create_sqs_queue(queue_name):
-    response = sqs.create_queue(
-        QueueName=queue_name,
-        Attributes={
-            'FifoQueue': 'true'
-        })
-    return response['QueueUrl']
+# def create_sqs_queue(queue_name):
+#     response = sqs.create_queue(
+#         QueueName=queue_name)
+#     return response['QueueUrl']
 
-def send_message_to_sqs(queue_url, message):
-    response = sqs.send_message(
-        QueueUrl=queue_url,
-        MessageBody=message
-    )
-    print("Message sent to", queue_url, ":", message)
+# def send_message_to_sqs(queue_url, message):
+#     response = sqs.send_message(
+#         QueueUrl=queue_url,
+#         MessageBody=message
+#     )
+#     print("Message sent to", queue_url, ":", message)
 
-def get_queue_size(queue_url):
-    response = sqs.get_queue_attributes(
-        QueueUrl=queue_url,
-        AttributeNames=['ApproximateNumberOfMessages']
-    )
-    return int(response['Attributes']['ApproximateNumberOfMessages'])
+# def get_queue_size(queue_url):
+#     response = sqs.get_queue_attributes(
+#         QueueUrl=queue_url,
+#         AttributeNames=['ApproximateNumberOfMessages']
+#     )
+#     return int(response['Attributes']['ApproximateNumberOfMessages'])
 
-def aggregate_messages_from_sqs(queue_url):
-    aggregated_message = ""
-    response = sqs.receive_message(
-        QueueUrl=queue_url,
-        MaxNumberOfMessages=10,
-        AttributeNames=['MessageAttributes'],
-        MessageAttributeNames=['All'],
-        WaitTimeSeconds=0
-    )
-    messages = response.get('Messages', [])
-    for message in messages:
-        aggregated_message = aggregated_message + " " + message['Body']
-    # Delete all messages from the queue after processing
-    if messages:
-        sqs.delete_message_batch(
-            QueueUrl=queue_url,
-            Entries=[{'Id': msg['MessageId'], 'ReceiptHandle': msg['ReceiptHandle']} for msg in messages]
-        )
-    return aggregated_message
+# def aggregate_messages_from_sqs(queue_url):
+#     aggregated_message = ""
+#     response = sqs.receive_message(
+#         QueueUrl=queue_url,
+#         MaxNumberOfMessages=10,
+#         AttributeNames=['MessageAttributes'],
+#         MessageAttributeNames=['All'],
+#         WaitTimeSeconds=0
+#     )
+#     messages = response.get('Messages', [])
+#     for message in messages:
+#         aggregated_message = aggregated_message + " " + message['Body']
+#     # Delete all messages from the queue after processing
+#     if messages:
+#         sqs.delete_message_batch(
+#             QueueUrl=queue_url,
+#             Entries=[{'Id': msg['MessageId'], 'ReceiptHandle': msg['ReceiptHandle']} for msg in messages]
+#         )
+#     return aggregated_message
 
 def lambda_handler(event, context):
     token = os.getenv('WHATSAPP_TOKEN')
@@ -133,26 +130,28 @@ def lambda_handler(event, context):
                 body["entry"][0]["changes"][0].get("value").get("contacts")[0]["wa_id"]):
             phone_number_id, display_phone_number, from_number, msg_body, user_phone_number = extract_data(body)
             
-            queue_url = get_or_create_sqs_queue(user_phone_number)
+            # queue_url = get_or_create_sqs_queue(user_phone_number)
 
-            send_message_to_sqs(queue_url, msg_body)
+            # send_message_to_sqs(queue_url, msg_body)
 
-            initial_size = get_queue_size(queue_url)
+            # initial_size = get_queue_size(queue_url)
 
-            # Poll the size of the SQS queue after 2 seconds
-            time.sleep(aggregate_interval)
+            # # Poll the size of the SQS queue after 2 seconds
+            # time.sleep(aggregate_interval)
     
-            current_size = get_queue_size(queue_url)
+            # current_size = get_queue_size(queue_url)
 
-            if current_size == initial_size:
-                aggregated_message = aggregate_messages_from_sqs(queue_url)
+            # if current_size == initial_size:
+            #     aggregated_message = aggregate_messages_from_sqs(queue_url)
+                
+            #     print("Message is: ", aggregated_message)
             
-                init_response_payload = init_chat(user_phone_number)
-            
-                if init_response_payload["success"]:
-                    relay_message(aggregated_message, init_response_payload["current_thread_id"], phone_number_id, token, from_number, user_phone_number, init_response_payload["is_new_thread"])
-                else:
-                    send_error_response(phone_number_id, token, from_number)
+            init_response_payload = init_chat(user_phone_number)
+        
+            if init_response_payload["success"]:
+                relay_message(msg_body, init_response_payload["current_thread_id"], phone_number_id, token, from_number, user_phone_number, init_response_payload["is_new_thread"])
+            else:
+                send_error_response(phone_number_id, token, from_number)
 
             return {
                 "statusCode": 200
