@@ -3,6 +3,7 @@ import os
 import boto3
 import time
 from openai import OpenAI
+import logging
 
 openAIClient = OpenAI(
     api_key=os.environ.get("openai_access_key"),
@@ -27,15 +28,46 @@ def summarize_chat(user_phone_number):
 
 def lambda_handler(event, context):
     try:
-        if "user_message" in event and "current_thread_id" in event and "user_phone_number" in event:
+        if "user_message" in event and "current_thread_id" in event and "user_phone_number" in event and "is_new_thread" in event:
             user_message = event["user_message"]
             current_thread_id = event["current_thread_id"]
             user_phone_number = event["user_phone_number"]
+            is_new_thread = event["is_new_thread"]
+
+            message = ""
+            if is_new_thread:
+                user = table.get_item(Key={"phone_number": user_phone_number})
+                item = user['Item']
+                if "likes" in item or "hates" in item or "did_today" in item or "going_to_do_today" in item or "going_to_do_later" in item or "avoid" in item or "next_convo" in item:
+                    message = "Metadata from previous conversations:\n"
+                if "likes" in item:
+                    message += f"Things the user likes:\n{json.dumps(item['likes'])}\n"
+                if "hates" in item:
+                    message += f"Things the user hates:\n{json.dumps(item['hates'])}\n"
+                if "did_today" in item:
+                    message += f"Things the user did today:{json.dumps(item['did_today'])}\n"
+                if "going_to_do_today" in item:
+                    message += f"Things the user is going to do today:{json.dumps(item['going_to_do_today'])}\n"
+                if "going_to_do_later" in item:
+                    message += f"Things the user is going to do tomorrow or later:{json.dumps(item['going_to_do_later'])}\n" 
+                if "avoid" in item:
+                    message += f"Things you should avoid talking about with the user:{json.dumps(item['avoid'])}\n"
+                if "next_convo" in item:
+                    message += f"Things you could bring up in your next conversation (cliffhangers):{json.dumps(item['next_convo'])}"
+            
+                if "messages" in item and len(item["messages"]) > 10:
+                    message += f"Last 10 messages:\n{json.dumps(item['messages'][len(item['messages']) - 10:])}"
+
+                message += f"Current message:\n{user_message}"
+            else:
+                message = user_message
+
+            print(message)
             
             openAIClient.beta.threads.messages.create(
                 thread_id = current_thread_id,
                 role = "user",
-                content = user_message
+                content = message
             )
             
             message_run = openAIClient.beta.threads.runs.create(
@@ -95,7 +127,7 @@ def lambda_handler(event, context):
                 'message': "Some params missing"
             }
     except Exception as e:
-        print(e)
+        logging.exception("Error occurred")
         return {
             'success': False,
             'message': str(e)

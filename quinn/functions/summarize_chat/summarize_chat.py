@@ -73,7 +73,7 @@ def lambda_handler(event, context):
                 
             table.update_item(
                 Key={"phone_number": phone_number},
-                UpdateExpression="set likes=list_append(if_not_exists(likes, :emptylist), :l), hates=list_append(if_not_exists(hates, :emptylist), :h), did_today=list_append(if_not_exists(did_today, :emptylist), :did), going_to_do_today=list_append(if_not_exists(going_to_do_today, :emptylist), :today), going_to_do_later=list_append(if_not_exists(going_to_do_later, :emptylist), :later), avoid=list_append(if_not_exists(avoid, :emptylist), :a), next_convo=list_append(if_not_exists(next_convo, :emptylist), :n)",
+                UpdateExpression="set likes=list_append(if_not_exists(likes, :emptylist), :l), hates=list_append(if_not_exists(hates, :emptylist), :h), did_today=list_append(if_not_exists(did_today, :emptylist), :did), going_to_do_today=list_append(if_not_exists(going_to_do_today, :emptylist), :today), going_to_do_later=list_append(if_not_exists(going_to_do_later, :emptylist), :later), avoid=list_append(if_not_exists(avoid, :emptylist), :a), next_convo=list_append(if_not_exists(next_convo, :emptylist), :n), message_start_index=:msi, current_thread_id=:t",
                 ExpressionAttributeValues={
                     ":l": [likes],
                     ":h": [hates],
@@ -82,7 +82,9 @@ def lambda_handler(event, context):
                     ":later": [going_to_do_later],
                     ":a": [avoid],
                     ":n": [next_convo],
-                    ":emptylist": []
+                    ":msi": len(item["messages"]) - 1,
+                    ":emptylist": [],
+                    ":t": ""
                     }
                 # UpdateExpression="set summaries=:s, current_thread_id=:t",
                 # ExpressionAttributeValues={":s": user["summaries"], ":t": ""}

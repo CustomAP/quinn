@@ -35,11 +35,13 @@ def lambda_handler(event, context):
                 
                 return {
                     'success': True,
+                    'is_new_thread': True,
                     'current_thread_id': response["Attributes"]["current_thread_id"]
                 }
             else:
                 return {
                     'success': True,
+                    'is_new_thread': False,
                     'current_thread_id': item["current_thread_id"]
                 }
         else:

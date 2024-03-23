@@ -40,11 +40,12 @@ def init_chat(user_phone_number):
     init_response_payload = json.load(init_response["Payload"])
     return init_response_payload
     
-def relay_message(msg_body, current_thread_id, phone_number_id, token, from_number, user_phone_number):
+def relay_message(msg_body, current_thread_id, phone_number_id, token, from_number, user_phone_number, is_new_thread):
     relay_request= {
         "user_message": msg_body,
         "current_thread_id": current_thread_id,
-        "user_phone_number": user_phone_number 
+        "user_phone_number": user_phone_number,
+        "is_new_thread": is_new_thread
     }
     
     relay_response = lambdaClient.invoke(
@@ -132,33 +133,33 @@ def lambda_handler(event, context):
                 body["entry"][0]["changes"][0].get("value").get("contacts")[0]["wa_id"]):
             phone_number_id, display_phone_number, from_number, msg_body, user_phone_number = extract_data(body)
             
-            #SQS processing here
-            queue_url = get_or_create_sqs_queue(user_phone_number)
+            # #SQS processing here
+            # queue_url = get_or_create_sqs_queue(user_phone_number)
             
-            # Wait for 2 seconds
-            time.sleep(2)
+            # # Wait for 2 seconds
+            # time.sleep(2)
             
-            send_message_to_sqs(queue_url, msg_body)
+            # send_message_to_sqs(queue_url, msg_body)
             
-            # Start polling
-            start_time = time.time()
-            while time.time() - start_time < 30:
-                messages = receive_messages_from_sqs(queue_url)
-                if messages:
-                    # New message received, reset timer and continue polling
-                    start_time = time.time()
-                else:
-                    # No new message received for 5 seconds, aggregate and process
-                    aggregated_message = aggregate_messages_from_sqs(queue_url)
-                    if aggregated_message:
-                        print("Aggregated message:", aggregated_message)
-                        # Process the aggregated message
-                        break  # Exit the loop after processing
+            # # Start polling
+            # start_time = time.time()
+            # while time.time() - start_time < 5:
+            #     messages = receive_messages_from_sqs(queue_url)
+            #     if messages:
+            #         # New message received, reset timer and continue polling
+            #         start_time = time.time()
+            #     else:
+            #         # No new message received for 5 seconds, aggregate and process
+            #         aggregated_message = aggregate_messages_from_sqs(queue_url)
+            #         if aggregated_message:
+            #             print("Aggregated message:", aggregated_message)
+            #             # Process the aggregated message
+            #             break  # Exit the loop after processing
             
             init_response_payload = init_chat(user_phone_number)
             
             if init_response_payload["success"]:
-                relay_message(aggregated_message, init_response_payload["current_thread_id"], phone_number_id, token, from_number, user_phone_number)
+                relay_message(msg_body, init_response_payload["current_thread_id"], phone_number_id, token, from_number, user_phone_number, init_response_payload["is_new_thread"])
             else:
                 send_error_response(phone_number_id, token, from_number)
 
