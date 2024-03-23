@@ -3,6 +3,7 @@ import requests
 import os
 import boto3
 import time
+import re
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
@@ -57,15 +58,19 @@ def relay_message(msg_body, current_thread_id, phone_number_id, token, from_numb
     relay_response_payload = json.load(relay_response["Payload"])
     
     if relay_response_payload["success"]:
-        response = requests.post(
-            f"https://graph.facebook.com/v18.0/{phone_number_id}/messages?access_token={token}",
-            json={
-                "messaging_product": "whatsapp",
-                "to": from_number,
-                "text": {"body": relay_response_payload["message"]}
-            },
-            headers={"Content-Type": "application/json"}
-        )
+        messages = re.findall('[^.?\n]+.?', relay_response_payload["message"])
+
+        for message in messages:
+            requests.post(
+                f"https://graph.facebook.com/v18.0/{phone_number_id}/messages?access_token={token}",
+                json={
+                    "messaging_product": "whatsapp",
+                    "to": from_number,
+                    "text": {"body": str(message).strip()}
+                },
+                headers={"Content-Type": "application/json"}
+            )
+            time.sleep(0.25)
     else:
        send_error_response(phone_number_id, token, from_number)
 
