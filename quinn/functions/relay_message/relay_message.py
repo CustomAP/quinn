@@ -112,7 +112,10 @@ def lambda_handler(event, context):
             response_message = messages.data[0].content[0].text.value
             response_role = messages.data[0].role
 
-            filtered_message = filter_message(response_message)
+            if len(response_message) > 50:
+                filtered_message = filter_message(response_message)
+            else:
+                filtered_message = response_message
 
             request_message = messages.data[1].content[0].text.value
             request_role = messages.data[1].role
