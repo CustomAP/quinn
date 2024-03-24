@@ -1,0 +1,7 @@
+{
+  "user_phone_number": "17819214483",
+  "queue_url": "https://sqs.us-east-2.amazonaws.com/471112961630/17819214483.fifo",
+  "phone_number_id": "283647688158245",
+  "token": "EAAFpnO7WYJUBOZBZCZBNZBOGXlcACGZCfkdmi1lRTZCneNZBJnWUAjVB8FXamIDCrlwjMifRYfVaidx7fDojp6dFBGO0juLsKB0zaG4ZC5rMQLEy6r8FpWeRxGWdymh5uWzZAS4QUgEsyeEjBl5Og3cYaJkkkXNrQshKjjuzByVGrmWeH3kuTontXflDlVLrkKMXG0ZA6vd9O3q6lN6XCIJCUZD",
+  "from_number": "17819214483"
+}

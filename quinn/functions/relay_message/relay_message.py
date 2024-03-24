@@ -83,6 +83,8 @@ def lambda_handler(event, context):
             is_new_thread = event["is_new_thread"]
 
             message = get_user_message(user_phone_number, user_message, is_new_thread)
+
+            print("original user message: " + user_message)
             
             openAIClient.beta.threads.messages.create(
                 thread_id = current_thread_id,
