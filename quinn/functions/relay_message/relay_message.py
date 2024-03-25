@@ -37,16 +37,16 @@ def get_user_message(user_phone_number, user_message, is_new_thread):
             message += f"Things the user likes:\n{json.dumps(item['likes'])}\n"
         if "hates" in item:
             message += f"Things the user hates:\n{json.dumps(item['hates'])}\n"
-        if "did_today" in item:
-            message += f"Things the user did today:{json.dumps(item['did_today'])}\n"
-        if "going_to_do_today" in item:
-            message += f"Things the user is going to do today:{json.dumps(item['going_to_do_today'])}\n"
-        if "going_to_do_later" in item:
-            message += f"Things the user is going to do tomorrow or later:{json.dumps(item['going_to_do_later'])}\n" 
+        # if "did_today" in item:
+        #     message += f"Things the user did today:{json.dumps(item['did_today'])}\n"
+        # if "going_to_do_today" in item:
+        #     message += f"Things the user is going to do today:{json.dumps(item['going_to_do_today'])}\n"
+        # if "going_to_do_later" in item:
+        #     message += f"Things the user is going to do tomorrow or later:{json.dumps(item['going_to_do_later'])}\n" 
         if "avoid" in item:
             message += f"Things you should avoid talking about with the user:{json.dumps(item['avoid'])}\n"
-        if "next_convo" in item:
-            message += f"Things you could bring up in your next conversation (cliffhangers):{json.dumps(item['next_convo'])}"
+        # if "next_convo" in item:
+        #     message += f"Things you could bring up in your next conversation (cliffhangers):{json.dumps(item['next_convo'])}"
     
         if "messages" in item and len(item["messages"]) > 10:
             message += f"Last 10 messages:\n{json.dumps(item['messages'][len(item['messages']) - 10:])}"

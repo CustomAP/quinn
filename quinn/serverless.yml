@@ -65,6 +65,16 @@ functions:
     timeout: 600
     layers:
       - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p310-requests:9
+  open_ai_assistant_conversation:
+    handler: functions/open_ai/assistant_conversation/assistant_conversation.handler
+    timeout: 30
+    layers:
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
+  open_ai_chat_completion:
+    handler: functions/open_ai/chat_completion/chat_completion.handler
+    timeout: 30
+    layers:
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
 
 plugins:
   - serverless-python-requirements

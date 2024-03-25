@@ -1,0 +1,4 @@
+{
+  "message": "message to change: My hobby is learning about different interests and preferences of people like you, engaging in fun conversations, and providing support when needed. I enjoy being a friendly companion and chatting about various topics that interest you. How about you? Do you have any hobbies or activities that you're passionate about?",
+  "system_message": "You are an assistant that modifies a message as:\nIf there are too many questions, make them one question.\nMake the reply shorter but do not destroy the information. Make sure all the information is still in the reply.\nRemove phrases like 'Feel free to', 'I am here for you', 'just let me know', 'I'm here to listen and talk with you', 'If there's anything you need' etc.\n"
+}
