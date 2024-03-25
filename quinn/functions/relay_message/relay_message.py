@@ -92,10 +92,12 @@ def lambda_handler(event, context):
 
             if open_ai_response_payload["success"]:
                 response_message = open_ai_response_payload["message"]
-                if len(response_message) > 50:
-                    filtered_message = filter_message(response_message)
-                else:
-                    filtered_message = response_message
+                # if len(response_message) > 50:
+                #     filtered_message = filter_message(response_message)
+                # else:
+                #     filtered_message = response_message
+
+                filtered_message = response_message
 
                 request_message = user_message
                 request_role = "user"

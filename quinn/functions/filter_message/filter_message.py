@@ -1,15 +1,9 @@
 import json
 import logging
-from openai import OpenAI
 import os
 import boto3
 
 lambdaClient = boto3.client("lambda")
-
-openAIClient = OpenAI(
-    api_key=os.environ.get("openai_access_key"),
-    organization=os.environ.get("openai_organization_id"),
-)
 
 filteror_system_message ='''
 You are an assistant that modifies a message as:
