@@ -41,9 +41,12 @@ def handler(event, context):
             messages = openAIClient.beta.threads.messages.list(thread_id=current_thread_id)
             response_message = messages.data[0].content[0].text.value
 
+            usage = message_run.usage.total_tokens
+
             return {
                 "success": True,
-                "response": response_message
+                "response": response_message,
+                "usage": usage
             }
         except Exception as e:
             return {

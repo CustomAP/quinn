@@ -84,70 +84,62 @@ def lambda_handler(event, context):
 
             message = get_user_message(user_phone_number, user_message, is_new_thread)
 
-            print("original user message: " + user_message)
-            
-            openAIClient.beta.threads.messages.create(
-                thread_id = current_thread_id,
-                role = "user",
-                content = message
-            )
-            
-            message_run = openAIClient.beta.threads.runs.create(
-                thread_id = current_thread_id,
-                assistant_id =os.environ.get("quinn_assistant_id")
-            )
-            
-            while True:
-                message_run = openAIClient.beta.threads.runs.retrieve(
-                    thread_id=current_thread_id,
-                    run_id=message_run.id
-                ) 
-    
-                if message_run.status != "completed":
-                    time.sleep(0.25)
-                else:
-                    break
-                    
-            messages = openAIClient.beta.threads.messages.list(thread_id=current_thread_id)
-            response_message = messages.data[0].content[0].text.value
-            response_role = messages.data[0].role
-
-            if len(response_message) > 50:
-                filtered_message = filter_message(response_message)
-            else:
-                filtered_message = response_message
-
-            request_message = messages.data[1].content[0].text.value
-            request_role = messages.data[1].role
-
-            replies = []
-            replies.append({
-                "role": request_role,
-                "message": request_message
-            })
-
-            replies.append({
-                "role": response_role,
-                "message": filtered_message
-            })
-
-            table.update_item(
-                Key={"phone_number": user_phone_number},
-                UpdateExpression="set messages=list_append(if_not_exists(messages, :emptylist), :m)",
-                ExpressionAttributeValues={
-                    ":m" : replies,
-                    ":emptylist": [] 
-                    }
-            )
-            
-            if message_run.usage.total_tokens > 2000:
-                print("Summarizing chat")
-                summarize_chat(user_phone_number)
-            
-            return {
-                "success": True,
-                "message": filtered_message
+            open_ai_request = {
+                "assistant_id": os.getenv("quinn_assistant_id"),
+                "thread_id": current_thread_id,
+                "message": message
             }
+            
+            open_ai_response = lambdaClient.invoke(
+                FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-open_ai_assistant_conversation",
+                Payload=json.dumps(open_ai_request)
+                )
+                
+            open_ai_response_payload = json.load(open_ai_response["Payload"])
+
+            if open_ai_response_payload["success"]:
+                response_message = open_ai_response_payload["response"]
+                if len(response_message) > 50:
+                    filtered_message = filter_message(response_message)
+                else:
+                    filtered_message = response_message
+
+                request_message = user_message
+                request_role = "user"
+
+                replies = []
+                replies.append({
+                    "role": request_role,
+                    "message": request_message
+                })
+
+                replies.append({
+                    "role": "assistant",
+                    "message": filtered_message
+                })
+
+                table.update_item(
+                    Key={"phone_number": user_phone_number},
+                    UpdateExpression="set messages=list_append(if_not_exists(messages, :emptylist), :m)",
+                    ExpressionAttributeValues={
+                        ":m" : replies,
+                        ":emptylist": [] 
+                        }
+                )
+                
+                if int(open_ai_response_payload["usage"]) > 2000:
+                    print("Summarizing chat")
+                    summarize_chat(user_phone_number)
+
+                return {
+                    "success": True,
+                    "message": filtered_message
+                }
+            else:
+               return {
+                    "success": False,
+                    "message": open_ai_response_payload["message"]
+                }         
         else:
             return {
                 'success': False,
