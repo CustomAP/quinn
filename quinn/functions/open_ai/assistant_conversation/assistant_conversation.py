@@ -45,13 +45,13 @@ def handler(event, context):
 
             return {
                 "success": True,
-                "response": response_message,
+                "message": response_message,
                 "usage": usage
             }
         except Exception as e:
             return {
                 "success": False,
-                "response": str(e)
+                "message": str(e)
             }
     else:
         return {

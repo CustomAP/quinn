@@ -1,14 +1,7 @@
 import json
 import os
 import boto3
-import time
-from openai import OpenAI
 import logging
-
-openAIClient = OpenAI(
-    api_key=os.environ.get("openai_access_key"),
-    organization=os.environ.get("openai_organization_id"),
-)
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table('users')
@@ -98,7 +91,7 @@ def lambda_handler(event, context):
             open_ai_response_payload = json.load(open_ai_response["Payload"])
 
             if open_ai_response_payload["success"]:
-                response_message = open_ai_response_payload["response"]
+                response_message = open_ai_response_payload["message"]
                 if len(response_message) > 50:
                     filtered_message = filter_message(response_message)
                 else:

@@ -31,8 +31,6 @@ functions:
   relay_message:
     handler: functions/relay_message/relay_message.lambda_handler
     timeout: 30
-    layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
   whatsapp_entrypoint:
     handler: functions/whatsapp/whatsapp_entrypoint/whatsapp_entrypoint.lambda_handler
     timeout: 30
@@ -45,8 +43,6 @@ functions:
   summarize_chat:
     handler: functions/summarize_chat/summarize_chat.lambda_handler
     timeout: 30
-    layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
   filter_message:
     handler: functions/filter_message/filter_message.handler
     timeout: 30
