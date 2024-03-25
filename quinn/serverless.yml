@@ -16,6 +16,7 @@ provider:
     openai_organization_id: org-nQnTgti1i8GBtV2AImNwhkCW
     quinn_assistant_id: asst_JGVfvgYliLwfYcBag9inMPcQ
     summarizor_assistant_id: asst_TJTe1fdE8nVj07MNtuylfypi
+    anthropic_access_key: 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
 
 functions:
   hello:
@@ -27,7 +28,7 @@ functions:
     handler: functions/init_chat/init_chat.lambda_handler
     timeout: 30
     layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
   relay_message:
     handler: functions/relay_message/relay_message.lambda_handler
     timeout: 30
@@ -53,7 +54,7 @@ functions:
     handler: functions/test/prompt_engineering/prompt_engineering.handler
     timeout: 30
     layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
   queue_receiver:
     handler: functions/queue_receiver/queue_receiver.lambda_handler
     timeout: 600
@@ -63,12 +64,17 @@ functions:
     handler: functions/open_ai/assistant_conversation/assistant_conversation.handler
     timeout: 30
     layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
   open_ai_chat_completion:
     handler: functions/open_ai/chat_completion/chat_completion.handler
     timeout: 30
     layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-openai:1
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
+  anthropic_message:
+    handler: functions/anthropic/message.handler
+    timeout: 30
+    layers:
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
 
 plugins:
   - serverless-python-requirements
