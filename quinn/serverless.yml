@@ -11,7 +11,7 @@ provider:
   environment:
     stage: ${opt:stage, 'dev'}
     openai_access_key: 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
-    WHATSAPP_TOKEN: EAAFpnO7WYJUBOZBZCZBNZBOGXlcACGZCfkdmi1lRTZCneNZBJnWUAjVB8FXamIDCrlwjMifRYfVaidx7fDojp6dFBGO0juLsKB0zaG4ZC5rMQLEy6r8FpWeRxGWdymh5uWzZAS4QUgEsyeEjBl5Og3cYaJkkkXNrQshKjjuzByVGrmWeH3kuTontXflDlVLrkKMXG0ZA6vd9O3q6lN6XCIJCUZD
+    WHATSAPP_TOKEN: EAAFpnO7WYJUBOZBF9jlozSBaNkcDvCjJZBmeN6FQGT2ZCATiF5C5ql7hjmeAwhe6ZAO2s77GzSPZBLv5hy9sPjkWvLm3KRb4bZAvujnLKd3rQGGTIzPfZBQyoZAVD2GCGi3UP2lPTdE5afxpquOsssRzJBc7jcrZBzkNHgTzivPIA5dP9SSjuCAw5g93rG0TD3d4Y8FQgb6WTijX7oY8n8DQZD
     VERIFY_TOKEN: QUINN
     openai_organization_id: org-nQnTgti1i8GBtV2AImNwhkCW
     quinn_assistant_id: asst_JGVfvgYliLwfYcBag9inMPcQ
