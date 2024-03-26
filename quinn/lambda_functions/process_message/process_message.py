@@ -101,15 +101,19 @@ def get_messages(user_phone_number, user_message):
     user = table.get_item(Key={"phone_number": user_phone_number})
     item = user['Item']
 
-    total_messages = len(item["messages"]) if "message" in item else 0
+    total_messages = len(item["messages"]) if "messages" in item else 0
 
     with open('prompts/quinn.yaml', 'r') as file:
         quinn_prompt = yaml.safe_load(file)
         messages = [{"role": "system", "content": quinn_prompt["system_prompt"]}]
         if total_messages > 0:
-            messages = item["messages"][max(total_messages - 49, 0): total_messages - 1]
+            for message in item["messages"][max(total_messages - 49, 0): total_messages]:
+                messages.append(message)
         
         messages.append({"role": "user", "content": user_message})
+
+        print(messages)
+
         return messages
 
 def lambda_handler(event, context):
