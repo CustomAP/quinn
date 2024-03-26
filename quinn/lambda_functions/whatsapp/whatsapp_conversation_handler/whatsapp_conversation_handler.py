@@ -1,8 +1,8 @@
 import json
 import os
 import boto3
-import datetime
 import logging
+from helper_functions.logging.logging_event import log_event_for_user
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
@@ -74,18 +74,6 @@ def send_message_to_sqs(queue_url, message, user_phone_number):
         QueueUrl=queue_url,
         MessageBody=message,
         MessageGroupId=user_phone_number
-    )
-
-def log_event_for_user(log_group_name, log_stream_name, message):
-    log_event = {
-        'timestamp': int(datetime.datetime.now().timestamp()) * 1000,# Timestamp in milliseconds
-        'message': message
-        }
-                    
-    logs_client.put_log_events(
-        logGroupName=log_group_name,
-        logStreamName=log_stream_name,
-        logEvents=[log_event]
     )
 
 def lambda_handler(event, context):
