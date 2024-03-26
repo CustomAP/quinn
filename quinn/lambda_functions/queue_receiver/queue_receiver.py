@@ -8,9 +8,19 @@ table = dynamodb.Table('users')
 sqs = boto3.client('sqs')
 
 last_poll_time = None
+function_start_time = None
 messages = []
 
 lambdaClient = boto3.client("lambda")
+
+def update_table(user_phone_number):
+    table.update_item(
+        Key={"phone_number": user_phone_number},
+        UpdateExpression="set is_queue_polling=:i",
+        ExpressionAttributeValues={
+            ":i" : False,
+            }
+    )
 
 def process_messages(user_phone_number, phone_number_id, token, from_number):
     aggregated_message = ""
@@ -34,6 +44,7 @@ def process_messages(user_phone_number, phone_number_id, token, from_number):
 def poll(queue_url, user_phone_number, phone_number_id, token, from_number):
     global messages
     global last_poll_time
+    global function_start_time
     while True:
         response = sqs.receive_message(
             QueueUrl=queue_url,
@@ -52,20 +63,19 @@ def poll(queue_url, user_phone_number, phone_number_id, token, from_number):
         else:
             print("messages now:" + str(messages))
             current_time = datetime.datetime.now()
-            duration = current_time - last_poll_time
-            if duration.total_seconds() > 120:
-                print("Exiting polling for queue" + queue_url)
-                table.update_item(
-                    Key={"phone_number": user_phone_number},
-                    UpdateExpression="set is_queue_polling=:i",
-                    ExpressionAttributeValues={
-                        ":i" : False,
-                        }
-                )
-                break
-            if duration.total_seconds() >= 2:
-                if len(messages):
+            time_since_last_message = current_time - last_poll_time
+            time_since_function_start = current_time - function_start_time
+            if time_since_last_message.total_seconds() >= 2:
+                if len(messages) and time_since_function_start.total_seconds() < 540:
                     process_messages(user_phone_number, phone_number_id, token, from_number)
+                elif len(messages) and time_since_function_start.total_seconds() > 540:
+                    process_messages(user_phone_number, phone_number_id, token, from_number)
+                    update_table(user_phone_number)
+                    break
+                elif time_since_last_message.total_seconds() > 120 or time_since_function_start.total_seconds() > 480:
+                    print("Exiting polling for queue" + queue_url)
+                    update_table(user_phone_number)
+                    break
                 messages = []
             else:
                 time.sleep(2)
@@ -78,7 +88,9 @@ def lambda_handler(event, context):
     from_number = event["from_number"]
 
     global last_poll_time
+    global function_start_time
     last_poll_time = datetime.datetime.now()
+    function_start_time = datetime.datetime.now()
 
     
     poll(queue_url, user_phone_number, phone_number_id, token, from_number)
