@@ -138,3 +138,6 @@ def lambda_handler(event, context):
                 }
     except Exception as e:
             log_event_for_user(log_group_name, log_stream_name, "Exception in conversation handler: " + str(e))
+            return {
+                'statusCode': 500
+                }
