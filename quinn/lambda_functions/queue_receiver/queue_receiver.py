@@ -66,7 +66,7 @@ def process_messages(user_phone_number, phone_number_id, token, from_number, fun
     try:
         aggregated_message = ""
         for message in messages:
-            aggregated_message = aggregated_message + " " + message['Body']
+            aggregated_message = aggregated_message + " " + message
 
         relay_request= {
             "user_message": aggregated_message,
@@ -147,9 +147,7 @@ def lambda_handler(event, context):
         function_start_time = datetime.datetime.now()
 
         log_event_for_user(log_group_name, log_stream_name, "Last polling time for queue " + queue_url + " : " + str(last_poll_time))
-
         poll(queue_url, user_phone_number, phone_number_id, token, from_number, function_name)
-
     except Exception as e:
         log_event_for_user(log_group_name, log_stream_name, "Exception in queue receiver: " + str(e))
         return {
