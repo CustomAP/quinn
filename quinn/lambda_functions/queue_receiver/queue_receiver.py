@@ -45,9 +45,10 @@ def action(queue_url, user_phone_number, phone_number_id, token, from_number):
         time.sleep(2)
     return False
 
-def mark_message_as_read(message_id):
+def mark_message_as_read(phone_number_id, message_id):
     mark_as_read_request = {
-        "message_id": message_id
+        "message_id": message_id,
+        "phone_number_id": phone_number_id
     }
     
     lambdaClient.invoke(
@@ -92,7 +93,7 @@ def poll(queue_url, user_phone_number, phone_number_id, token, from_number):
                 for message in response["Messages"]:
                     json_message = json.loads(message['Body'])
                     messages.append(json_message["message"])
-                    mark_message_as_read(json_message["message_id"])
+                    mark_message_as_read(phone_number_id, json_message["message_id"])
                     sqs.delete_message(
                         QueueUrl=queue_url,
                         ReceiptHandle=message['ReceiptHandle']
