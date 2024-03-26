@@ -6,8 +6,6 @@ from helper_functions.logging.logging_event import log_event_for_user, create_lo
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
-logs_client = boto3.client('logs')
-logger = logging.getLogger()
 
 aggregate_interval = 2
 

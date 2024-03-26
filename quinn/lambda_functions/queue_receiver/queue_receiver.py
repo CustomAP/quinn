@@ -3,10 +3,12 @@ import datetime
 import time
 import json
 from helper_functions.logging.logging_event import log_event_for_user, create_log_group, create_log_stream
+import logging
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table('users')
 sqs = boto3.client('sqs')
+logger = logging.getLogger()
 
 last_poll_time = None
 function_start_time = None
@@ -23,7 +25,7 @@ def update_table(user_phone_number):
             }
     )
 
-def action(queue_url, user_phone_number, phone_number_id, token, from_number):
+def action(queue_url, user_phone_number, phone_number_id, token, from_number, function_name):
     global messages
     global last_poll_time
     global function_start_time
@@ -32,9 +34,9 @@ def action(queue_url, user_phone_number, phone_number_id, token, from_number):
     time_since_function_start = current_time - function_start_time
     if time_since_last_message.total_seconds() >= 2:
         if len(messages) and time_since_function_start.total_seconds() < 540:
-            process_messages(user_phone_number, phone_number_id, token, from_number)
+            process_messages(user_phone_number, phone_number_id, token, from_number, function_name)
         elif len(messages) and time_since_function_start.total_seconds() > 540:
-            process_messages(user_phone_number, phone_number_id, token, from_number)
+            process_messages(user_phone_number, phone_number_id, token, from_number, function_name)
             update_table(user_phone_number)
             return True
         elif time_since_last_message.total_seconds() > 120 or time_since_function_start.total_seconds() > 480:
@@ -59,9 +61,9 @@ def mark_message_as_read(phone_number_id, message_id):
     )
 
 def process_messages(user_phone_number, phone_number_id, token, from_number, function_name):
+    log_group_name = create_log_group(user_phone_number)
+    log_stream_name = create_log_stream(user_phone_number, function_name)
     try:
-        log_group_name = create_log_group(user_phone_number)
-        log_stream_name = create_log_stream(user_phone_number, function_name)
         aggregated_message = ""
         for message in messages:
             aggregated_message = aggregated_message + " " + message['Body']
@@ -74,7 +76,7 @@ def process_messages(user_phone_number, phone_number_id, token, from_number, fun
             "from_number": from_number
         }
         
-        log_event_for_user(log_group_name, log_stream_name, "Starting message processing for message: " + aggregated_message)
+        log_event_for_user(log_group_name, log_stream_name, "Starting message processing for message: " + str(aggregated_message))
 
         lambdaClient.invoke(
             FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-process_message",
@@ -102,7 +104,7 @@ def poll(queue_url, user_phone_number, phone_number_id, token, from_number, func
                 WaitTimeSeconds=5
             )
             if 'Messages' in response:
-                log_event_for_user(log_group_name, log_stream_name, "Message found in queue: " + queue_url)
+                log_event_for_user(log_group_name, log_stream_name, "Message found in queue: " + str(queue_url))
                 last_poll_time = datetime.datetime.now()
                 for message in response["Messages"]:
                     json_message = json.loads(message['Body'])
@@ -114,8 +116,8 @@ def poll(queue_url, user_phone_number, phone_number_id, token, from_number, func
                     )
             else:
                 try:
-                    log_event_for_user(log_group_name, log_stream_name, "Exiting polling for queue: " + queue_url)
-                    if action(queue_url, user_phone_number, phone_number_id, token, from_number):
+                    log_event_for_user(log_group_name, log_stream_name, "Exiting polling for queue: " + str(queue_url))
+                    if action(queue_url, user_phone_number, phone_number_id, token, from_number, function_name):
                         break
                 except Exception as e:
                     log_event_for_user(log_group_name, log_stream_name, "Exception in polling queue: " + str(e))
@@ -144,7 +146,7 @@ def lambda_handler(event, context):
         last_poll_time = datetime.datetime.now()
         function_start_time = datetime.datetime.now()
 
-        log_event_for_user(log_group_name, log_stream_name, "Last polling time for queue " + queue_url + " : " + last_poll_time)
+        log_event_for_user(log_group_name, log_stream_name, "Last polling time for queue " + queue_url + " : " + str(last_poll_time))
 
         poll(queue_url, user_phone_number, phone_number_id, token, from_number, function_name)
 

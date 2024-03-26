@@ -38,11 +38,10 @@ def create_log_stream(user_phone_number, function_name):
             logStreamNamePrefix=log_stream_name
         )
         
-        for stream in response['logStreams']:
-            if stream['logStreamName'] == log_stream_name:
-                logs_client.create_log_stream(logGroupName=log_group_name, logStreamName=log_stream_name)
-                logger.setLevel("INFO")
-                logger.info("Successfully created log stream for user " + user_phone_number + " and function: " + function_name)
+        if not response['logStreams']:
+            logs_client.create_log_stream(logGroupName=log_group_name, logStreamName=log_stream_name)
+            logger.setLevel("INFO")
+            logger.info("Successfully created log stream for user " + user_phone_number + " and function: " + function_name)
         else:
             logger.setLevel("INFO")
             logger.info("Log stream already exists for user " + user_phone_number + " and function: " + function_name)

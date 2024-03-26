@@ -132,13 +132,16 @@ def lambda_handler(event, context):
         function_name = context.function_name
         log_group_name = create_log_group(user_phone_number)
         log_stream_name = create_log_stream(user_phone_number, function_name)
+
+        logger.setLevel('INFO')
+        logger.info("Function name and log stream name: " + function_name + " " + log_stream_name)
         
         try:
             messages = get_messages(user_phone_number, user_message)
 
             response = stateless_llm_call({"messages" : messages})
 
-            log_event_for_user(log_group_name, log_stream_name, "Calling statless LLM for message: " + messages)
+            log_event_for_user(log_group_name, log_stream_name, "Calling statless LLM for message: " + str(messages))
 
             if response["success"]:
                 log_event_for_user(log_group_name, log_stream_name, "Received LLM response.")
@@ -146,7 +149,7 @@ def lambda_handler(event, context):
                     {"role" : "user", "content" : user_message},
                     {"role": "assistant", "content" : response["message"]}
                 ]
-                log_event_for_user(log_group_name, log_stream_name, "Updating table with replies: " + replies)
+                log_event_for_user(log_group_name, log_stream_name, "Updating table with replies: " + str(replies))
 
                 messages_table.update_item(
                     Key={"phone_number": user_phone_number},
@@ -157,10 +160,10 @@ def lambda_handler(event, context):
                         }
                 )
 
-                log_event_for_user(log_group_name, log_stream_name, "Sending user response: " + response["message"])
+                log_event_for_user(log_group_name, log_stream_name, "Sending user response: " + str(response["message"]))
                 send_success_response(response["message"], phone_number_id, token, from_number)
             else:
-                log_event_for_user(log_group_name, log_stream_name, "Failed to receive LLM response: " + response["message"])
+                log_event_for_user(log_group_name, log_stream_name, "Failed to receive LLM response: " + str(response["message"]))
                 send_error_response(phone_number_id, token, from_number)
             
             # TODO add some other logic after X messages summarize and update system prompt
