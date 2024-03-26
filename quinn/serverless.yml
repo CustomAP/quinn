@@ -22,62 +22,30 @@ provider:
     openai_model: gpt-3.5-turbo-0125
 
 functions:
-  hello:
-    handler: functions/hello/hello.handler
-    timeout: 30
-    layers:
-      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p310-requests:9
-  init_chat:
-    handler: functions/init_chat/init_chat.lambda_handler
+  process_message:
+    handler: lambda_functions/process_message/process_message.lambda_handler
     timeout: 30
     layers:
       - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
-  relay_message:
-    handler: functions/relay_message/relay_message.lambda_handler
-    timeout: 30
+      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p310-requests:9
   whatsapp_entrypoint:
-    handler: functions/whatsapp/whatsapp_entrypoint/whatsapp_entrypoint.lambda_handler
+    handler: lambda_functions/whatsapp/whatsapp_entrypoint/whatsapp_entrypoint.lambda_handler
     timeout: 30
   whatsapp_token_verifier:
-    handler: functions/whatsapp/whatsapp_token_verifier/whatsapp_token_verifier.lambda_handler
+    handler: lambda_functions/whatsapp/whatsapp_token_verifier/whatsapp_token_verifier.lambda_handler
     timeout: 30
   whatsapp_conversation_handler:
-    handler: functions/whatsapp/whatsapp_conversation_handler/whatsapp_conversation_handler.lambda_handler
+    handler: lambda_functions/whatsapp/whatsapp_conversation_handler/whatsapp_conversation_handler.lambda_handler
     timeout: 30
   summarize_chat:
-    handler: functions/summarize_chat/summarize_chat.lambda_handler
+    handler: lambda_functions/summarize_chat/summarize_chat.lambda_handler
     timeout: 30
   filter_message:
-    handler: functions/filter_message/filter_message.handler
+    handler: lambda_functions/filter_message/filter_message.handler
     timeout: 30
-  whatsapp_message_throttler:
-    handler: functions/whatsapp_message_throttler/whatsapp_message_throttler.lambda_handler
-    timeout: 30
-  test_prompt_engineering:
-    handler: functions/test/prompt_engineering/prompt_engineering.handler
-    timeout: 30
-    layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
   queue_receiver:
-    handler: functions/queue_receiver/queue_receiver.lambda_handler
+    handler: lambda_functions/queue_receiver/queue_receiver.lambda_handler
     timeout: 600
-    layers:
-      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p310-requests:9
-  open_ai_assistant_conversation:
-    handler: functions/open_ai/assistant_conversation/assistant_conversation.handler
-    timeout: 30
-    layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
-  open_ai_chat_completion:
-    handler: functions/open_ai/chat_completion/chat_completion.handler
-    timeout: 30
-    layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
-  anthropic_message:
-    handler: functions/anthropic/message.handler
-    timeout: 30
-    layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
 
 plugins:
   - serverless-python-requirements

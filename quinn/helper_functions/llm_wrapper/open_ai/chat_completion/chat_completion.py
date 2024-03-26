@@ -7,12 +7,12 @@ openAIClient = OpenAI(
     organization=os.environ.get("openai_organization_id"),
 )
 
-def handler(event, context):
+def openai_chat_completion(request):
     try:
-        if "messages" in event and "model" in event:
+        if "messages" in request and "model" in request:
             response = openAIClient.chat.completions.create(
-                model=event["model"],
-                messages=event["messages"]
+                model=request["model"],
+                messages=request["messages"]
             )
 
             return {

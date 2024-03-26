@@ -1,7 +1,10 @@
 import json
-import os
 import boto3
 import logging
+import requests
+import re
+import time
+from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table('users')
@@ -66,53 +69,70 @@ def filter_message(message):
         return filter_response_payload["message"]
     else:
         raise "Failed to filter message"
+    
+def send_success_response(response, phone_number_id, token, from_number):
+    messages = re.findall('[^.?!\n]+.?', response)
+
+    for message in messages:
+        requests.post(
+            f"https://graph.facebook.com/v18.0/{phone_number_id}/messages?access_token={token}",
+            json={
+                "messaging_product": "whatsapp",
+                "to": from_number,
+                "text": {"body": str(message).strip()}
+            },
+            headers={"Content-Type": "application/json"}
+        )
+        time.sleep(2)
+    
+def send_error_response(phone_number_id, token, from_number):
+    requests.post(
+        f"https://graph.facebook.com/v18.0/{phone_number_id}/messages?access_token={token}",
+        json={
+            "messaging_product": "whatsapp",
+            "to": from_number,
+            "text": {"body": "Sorry something went wrong!"}
+        },
+        headers={"Content-Type": "application/json"}
+    )
+
+def get_messages(user_phone_number, user_message):
+    user = table.get_item(Key={"phone_number": user_phone_number})
+    item = user['Item']
+
+    total_messages = len(item["messages"]) if "message" in item else 0
+
+    messages = []
+    if total_messages > 0:
+        messages = item["messages"][min(total_messages - 49, 0): total_messages - 1]
+    
+    messages.append({"role": "user", "content": user_message})
+    return messages
 
 def lambda_handler(event, context):
     try:
-        if "user_message" in event and "current_thread_id" in event and "user_phone_number" in event and "is_new_thread" in event:
+        if ("user_message" in event and
+            "user_phone_number" in event and
+            "phone_number_id" in event and
+            "token" in event and
+            "from_number" in event
+            ):
             user_message = event["user_message"]
-            current_thread_id = event["current_thread_id"]
             user_phone_number = event["user_phone_number"]
-            is_new_thread = event["is_new_thread"]
+            phone_number_id = event["phone_number_id"]
+            token = event["token"]
+            from_number = event["from_number"]
 
-            message = get_user_message(user_phone_number, user_message, is_new_thread)
+            messages = get_messages(user_phone_number, user_message)
 
-            open_ai_request = {
-                "assistant_id": os.getenv("quinn_assistant_id"),
-                "thread_id": current_thread_id,
-                "message": message
-            }
-            
-            open_ai_response = lambdaClient.invoke(
-                FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-open_ai_assistant_conversation",
-                Payload=json.dumps(open_ai_request)
-                )
+            response = stateless_llm_call({"messages" : messages})
+
+            if response["success"]:
+                replies = [
+                    {"role" : "user", "content" : user_message},
+                    {"role": "assistant", "content" : response["message"]}
+                ]
                 
-            open_ai_response_payload = json.load(open_ai_response["Payload"])
-
-            if open_ai_response_payload["success"]:
-                response_message = open_ai_response_payload["message"]
-                # if len(response_message) > 50:
-                #     filtered_message = filter_message(response_message)
-                # else:
-                #     filtered_message = response_message
-
-                filtered_message = response_message
-
-                request_message = user_message
-                request_role = "user"
-
-                replies = []
-                replies.append({
-                    "role": request_role,
-                    "message": request_message
-                })
-
-                replies.append({
-                    "role": "assistant",
-                    "message": filtered_message
-                })
-
                 table.update_item(
                     Key={"phone_number": user_phone_number},
                     UpdateExpression="set messages=list_append(if_not_exists(messages, :emptylist), :m)",
@@ -121,28 +141,21 @@ def lambda_handler(event, context):
                         ":emptylist": [] 
                         }
                 )
-                
-                if int(open_ai_response_payload["usage"]) > 2000:
-                    print("Summarizing chat")
-                    summarize_chat(user_phone_number)
 
-                return {
-                    "success": True,
-                    "message": filtered_message
-                }
+                send_success_response(response["message"], phone_number_id, token, from_number)
             else:
-               return {
-                    "success": False,
-                    "message": open_ai_response_payload["message"]
-                }         
+                print("LLM Response failed" + response["message"])
+                send_error_response(phone_number_id, token, from_number)
+            
+            # TODO add some other logic after X messages summarize and update system prompt
+            # if int(open_ai_response_payload["usage"]) > 2000:
+            #     print("Summarizing chat")
+            #     summarize_chat(user_phone_number)
+
+            
         else:
-            return {
-                'success': False,
-                'message': "Some params missing"
-            }
+            print("missing params")
+            send_error_response(phone_number_id, token, from_number)
     except Exception as e:
         logging.exception("Error occurred")
-        return {
-            'success': False,
-            'message': str(e)
-        }
+        send_error_response(phone_number_id, token, from_number)

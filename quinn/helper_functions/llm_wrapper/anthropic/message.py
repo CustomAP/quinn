@@ -7,13 +7,13 @@ anthropicClient = anthropic.Anthropic(
     api_key=os.getenv("anthropic_access_key"),
 )
 
-def handler(event, context):
-    if "messages" in event and "model" in event:
+def anthropic_message(request):
+    if "messages" in request and "model" in request:
         try:
             response = anthropicClient.messages.create(
-                model=event["model"],
+                model=request["model"],
                 max_tokens=1024,
-                messages=event["messages"]
+                messages=request["messages"]
             )
 
             return {

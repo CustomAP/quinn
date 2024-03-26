@@ -1,6 +1,8 @@
 import os
 import json
 import boto3
+from helper_functions.llm_wrapper.open_ai.chat_completion.chat_completion import openai_chat_completion
+from helper_functions.llm_wrapper.anthropic.message import anthropic_message
 
 lambdaClient = boto3.client("lambda")
 
@@ -15,13 +17,7 @@ def stateless_llm_call(request):
                 "messages": request["messages"]
             }
             
-            openai_response = lambdaClient.invoke(
-                FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-open_ai_chat_completion",
-                Payload=json.dumps(openai_request)
-            )
-                
-            openai_response_payload = json.load(openai_response["Payload"])
-            return openai_response_payload
+            return openai_chat_completion(openai_request)
         elif llm == "anthropic":
             anthropic_model = os.getenv("anthropic_model")
             anthropic_request = {
@@ -29,13 +25,7 @@ def stateless_llm_call(request):
                 "messages": request["messages"]
             }
             
-            anthropic_response = lambdaClient.invoke(
-                FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-anthropic_message",
-                Payload=json.dumps(anthropic_request)
-            )
-                
-            anthropic_response_payload = json.load(anthropic_response["Payload"])
-            return anthropic_response_payload
+            return anthropic_message(anthropic_request)
         else:
             return {
                 "success": False,
