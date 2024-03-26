@@ -8,7 +8,8 @@ from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_
 import yaml
 
 dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table('users')
+usersTable = dynamodb.Table('users')
+messages_table = dynamodb.Table('messages')
 
 lambdaClient = boto3.client("lambda")
 
@@ -26,7 +27,7 @@ def summarize_chat(user_phone_number):
 def get_user_message(user_phone_number, user_message, is_new_thread):
     message = ""
     if is_new_thread:
-        user = table.get_item(Key={"phone_number": user_phone_number})
+        user = usersTable.get_item(Key={"phone_number": user_phone_number})
         item = user['Item']
         if "likes" in item or "hates" in item or "did_today" in item or "going_to_do_today" in item or "going_to_do_later" in item or "avoid" in item or "next_convo" in item:
             message = "Metadata from previous conversations:\n"
@@ -98,7 +99,7 @@ def send_error_response(phone_number_id, token, from_number):
     )
 
 def get_messages(user_phone_number, user_message):
-    user = table.get_item(Key={"phone_number": user_phone_number})
+    user = messages_table.get_item(Key={"phone_number": user_phone_number})
     item = user['Item']
 
     total_messages = len(item["messages"]) if "messages" in item else 0
@@ -140,7 +141,7 @@ def lambda_handler(event, context):
                     {"role": "assistant", "content" : response["message"]}
                 ]
                 
-                table.update_item(
+                messages_table.update_item(
                     Key={"phone_number": user_phone_number},
                     UpdateExpression="set messages=list_append(if_not_exists(messages, :emptylist), :m)",
                     ExpressionAttributeValues={
