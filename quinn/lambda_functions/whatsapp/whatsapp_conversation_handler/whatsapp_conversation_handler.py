@@ -45,8 +45,9 @@ def extract_data(body):
     from_number = body["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
     msg_body = body["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
     user_phone_number = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+    message_id = body["entry"][0]["changes"][0]["value"]["messages"][0]["id"]
     
-    return (phone_number_id, display_phone_number, from_number, msg_body, user_phone_number)
+    return (phone_number_id, display_phone_number, from_number, msg_body, user_phone_number, message_id)
 
 def get_or_create_sqs_queue(queue_name):
     # Check if the queue exists
@@ -69,10 +70,10 @@ def create_sqs_queue(queue_name):
         })
     return response['QueueUrl']
 
-def send_message_to_sqs(queue_url, message, user_phone_number):
+def send_message_to_sqs(queue_url, message, user_phone_number, message_id):
     sqs.send_message(
         QueueUrl=queue_url,
-        MessageBody=message,
+        MessageBody=json.dumps({"message" : message, "message_id" : message_id}),
         MessageGroupId=user_phone_number
     )
 
@@ -83,9 +84,9 @@ def lambda_handler(event, context):
         if body.get("object"):
             if (body.get("entry") and
                     body["entry"][0].get("changes") and
-                    body["entry"][0]["changes"][0].get("value").get("messages") and
+                    body["entry"][0]["changes"][0].get("value").get("messages")[0]["id"] and
                     body["entry"][0]["changes"][0].get("value").get("contacts")[0]["wa_id"]):
-                phone_number_id, display_phone_number, from_number, msg_body, user_phone_number = extract_data(body)
+                phone_number_id, display_phone_number, from_number, msg_body, user_phone_number, message_id = extract_data(body)
 
                 try:
                     log_group_name = f'/aws/lambda/{user_phone_number}'
@@ -119,7 +120,7 @@ def lambda_handler(event, context):
                 trigger_queue_receiver(queue_url, user_phone_number, phone_number_id, token, from_number)
 
                 log_event_for_user(log_group_name, log_stream_name, "Adding message to the queue.")
-                send_message_to_sqs(queue_url, msg_body, user_phone_number)
+                send_message_to_sqs(queue_url, msg_body, user_phone_number, message_id)
                 
                 return {
                     "statusCode": 200

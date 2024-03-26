@@ -40,6 +40,8 @@ functions:
   whatsapp_mark_as_read:
     handler: lambda_functions/whatsapp/whatsapp_mark_as_read/whatsapp_mark_as_read.lambda_handler
     timeout: 30
+    layers:
+      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p310-requests:9
   summarize_chat:
     handler: lambda_functions/summarize_chat/summarize_chat.lambda_handler
     timeout: 30

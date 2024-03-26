@@ -45,13 +45,21 @@ def action(queue_url, user_phone_number, phone_number_id, token, from_number):
         time.sleep(2)
     return False
 
-def mark_message_as_read(user_phone_number, message_id):
-    pass
+def mark_message_as_read(message_id):
+    mark_as_read_request = {
+        "message_id": message_id
+    }
+    
+    lambdaClient.invoke(
+        FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-whatsapp_mark_as_read",
+        Payload=json.dumps(mark_as_read_request),
+        InvocationType="Event"
+    )
 
 def process_messages(user_phone_number, phone_number_id, token, from_number):
     aggregated_message = ""
     for message in messages:
-        aggregated_message = aggregated_message + " " + message['Body']
+        aggregated_message = aggregated_message + " " + message
 
     relay_request= {
         "user_message": aggregated_message,
@@ -78,17 +86,27 @@ def poll(queue_url, user_phone_number, phone_number_id, token, from_number):
             WaitTimeSeconds=5
         )
         if 'Messages' in response:
-            print("message found")
-            last_poll_time = datetime.datetime.now()
-            for message in response["Messages"]:
-                messages.append(message)
-                sqs.delete_message(
-                    QueueUrl=queue_url,
-                    ReceiptHandle=message['ReceiptHandle']
-                )
+            try:
+                print("message found")
+                last_poll_time = datetime.datetime.now()
+                for message in response["Messages"]:
+                    json_message = json.loads(message['Body'])
+                    messages.append(json_message["message"])
+                    mark_message_as_read(json_message["message_id"])
+                    sqs.delete_message(
+                        QueueUrl=queue_url,
+                        ReceiptHandle=message['ReceiptHandle']
+                    )
+            except Exception as e:
+                print(str(e))
         else:
-            print("messages now:" + str(messages))
-            if action(queue_url, user_phone_number, phone_number_id, token, from_number):
+            try:
+                print("messages now:" + str(messages))
+                if action(queue_url, user_phone_number, phone_number_id, token, from_number):
+                    break
+            except Exception as e:
+                print(str(e))
+                update_table(user_phone_number)
                 break
 
 def lambda_handler(event, context):
