@@ -2,6 +2,7 @@ import boto3
 import datetime
 import time
 import json
+from helper_functions.logging.logging_event import log_event_for_user, create_log_group, create_log_stream
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table('users')
@@ -57,38 +58,51 @@ def mark_message_as_read(phone_number_id, message_id):
         InvocationType="Event"
     )
 
-def process_messages(user_phone_number, phone_number_id, token, from_number):
-    aggregated_message = ""
-    for message in messages:
-        aggregated_message = aggregated_message + " " + message
+def process_messages(user_phone_number, phone_number_id, token, from_number, function_name):
+    try:
+        log_group_name = create_log_group(user_phone_number)
+        log_stream_name = create_log_stream(user_phone_number, function_name)
+        aggregated_message = ""
+        for message in messages:
+            aggregated_message = aggregated_message + " " + message['Body']
 
-    relay_request= {
-        "user_message": aggregated_message,
-        "user_phone_number": user_phone_number,
-        "phone_number_id": phone_number_id,
-        "token": token,
-        "from_number": from_number
-    }
+        relay_request= {
+            "user_message": aggregated_message,
+            "user_phone_number": user_phone_number,
+            "phone_number_id": phone_number_id,
+            "token": token,
+            "from_number": from_number
+        }
+        
+        log_event_for_user(log_group_name, log_stream_name, "Starting message processing for message: " + aggregated_message)
+
+        lambdaClient.invoke(
+            FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-process_message",
+            Payload=json.dumps(relay_request),
+            InvocationType="Event"
+        )
+        
+    except Exception as e:
+        log_event_for_user(log_group_name, log_stream_name, "Exception in invoking message processing during polling: " + str(e))
+        return {
+            'statusCode' : 500
+        }    
     
-    lambdaClient.invoke(
-        FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-process_message",
-        Payload=json.dumps(relay_request),
-        InvocationType="Event"
-    )
-
-def poll(queue_url, user_phone_number, phone_number_id, token, from_number):
+        
+def poll(queue_url, user_phone_number, phone_number_id, token, from_number, function_name):
+    log_group_name = create_log_group(user_phone_number)
+    log_stream_name = create_log_stream(user_phone_number, function_name)
     global messages
     global last_poll_time
-    global function_start_time
-    while True:
-        response = sqs.receive_message(
-            QueueUrl=queue_url,
-            MaxNumberOfMessages=10,
-            WaitTimeSeconds=5
-        )
-        if 'Messages' in response:
-            try:
-                print("message found")
+    try:
+        while True:
+            response = sqs.receive_message(
+                QueueUrl=queue_url,
+                MaxNumberOfMessages=10,
+                WaitTimeSeconds=5
+            )
+            if 'Messages' in response:
+                log_event_for_user(log_group_name, log_stream_name, "Message found in queue: " + queue_url)
                 last_poll_time = datetime.datetime.now()
                 for message in response["Messages"]:
                     json_message = json.loads(message['Body'])
@@ -98,17 +112,20 @@ def poll(queue_url, user_phone_number, phone_number_id, token, from_number):
                         QueueUrl=queue_url,
                         ReceiptHandle=message['ReceiptHandle']
                     )
-            except Exception as e:
-                print(str(e))
-        else:
-            try:
-                print("messages now:" + str(messages))
-                if action(queue_url, user_phone_number, phone_number_id, token, from_number):
+            else:
+                try:
+                    log_event_for_user(log_group_name, log_stream_name, "Exiting polling for queue: " + queue_url)
+                    if action(queue_url, user_phone_number, phone_number_id, token, from_number):
+                        break
+                except Exception as e:
+                    log_event_for_user(log_group_name, log_stream_name, "Exception in polling queue: " + str(e))
+                    update_table(user_phone_number)
                     break
-            except Exception as e:
-                print(str(e))
-                update_table(user_phone_number)
-                break
+    except Exception as e:
+        log_event_for_user(log_group_name, log_stream_name, "Exception in polling queue: " + str(e))
+        return {
+            'statusCode' : 500
+        }
 
 def lambda_handler(event, context):
     queue_url = event["queue_url"]
@@ -117,10 +134,22 @@ def lambda_handler(event, context):
     token = event["token"]
     from_number = event["from_number"]
 
-    global last_poll_time
-    global function_start_time
-    last_poll_time = datetime.datetime.now()
-    function_start_time = datetime.datetime.now()
-
+    function_name = context.function_name
+    log_group_name = create_log_group(user_phone_number)
+    log_stream_name = create_log_stream(user_phone_number, function_name)
     
-    poll(queue_url, user_phone_number, phone_number_id, token, from_number)
+    try:
+        global last_poll_time
+        global function_start_time
+        last_poll_time = datetime.datetime.now()
+        function_start_time = datetime.datetime.now()
+
+        log_event_for_user(log_group_name, log_stream_name, "Last polling time for queue " + queue_url + " : " + last_poll_time)
+
+        poll(queue_url, user_phone_number, phone_number_id, token, from_number, function_name)
+
+    except Exception as e:
+        log_event_for_user(log_group_name, log_stream_name, "Exception in queue receiver: " + str(e))
+        return {
+            'statusCode': 500
+        }

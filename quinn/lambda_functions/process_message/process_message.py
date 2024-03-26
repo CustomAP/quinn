@@ -4,14 +4,16 @@ import logging
 import requests
 import re
 import time
-from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
 import yaml
+from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
+from helper_functions.logging.logging_event import log_event_for_user, create_log_group, create_log_stream
 
 dynamodb = boto3.resource("dynamodb")
 usersTable = dynamodb.Table('users')
 messages_table = dynamodb.Table('messages')
 
 lambdaClient = boto3.client("lambda")
+logger = logging.getLogger()
 
 def summarize_chat(user_phone_number):
     summarize_request= {
@@ -118,29 +120,34 @@ def get_messages(user_phone_number, user_message):
         return messages
 
 def lambda_handler(event, context):
-    try:
-        if ("user_message" in event and
-            "user_phone_number" in event and
-            "phone_number_id" in event and
-            "token" in event and
-            "from_number" in event
-            ):
-            user_message = event["user_message"]
-            user_phone_number = event["user_phone_number"]
-            phone_number_id = event["phone_number_id"]
-            token = event["token"]
-            from_number = event["from_number"]
+    if ("user_message" in event and "user_phone_number" in event and
+        "phone_number_id" in event and "token" in event and
+        "from_number" in event):
+        user_message = event["user_message"]
+        user_phone_number = event["user_phone_number"]
+        phone_number_id = event["phone_number_id"]
+        token = event["token"]
+        from_number = event["from_number"]
 
+        function_name = context.function_name
+        log_group_name = create_log_group(user_phone_number)
+        log_stream_name = create_log_stream(user_phone_number, function_name)
+        
+        try:
             messages = get_messages(user_phone_number, user_message)
 
             response = stateless_llm_call({"messages" : messages})
 
+            log_event_for_user(log_group_name, log_stream_name, "Calling statless LLM for message: " + messages)
+
             if response["success"]:
+                log_event_for_user(log_group_name, log_stream_name, "Received LLM response.")
                 replies = [
                     {"role" : "user", "content" : user_message},
                     {"role": "assistant", "content" : response["message"]}
                 ]
-                
+                log_event_for_user(log_group_name, log_stream_name, "Updating table with replies: " + replies)
+
                 messages_table.update_item(
                     Key={"phone_number": user_phone_number},
                     UpdateExpression="set messages=list_append(if_not_exists(messages, :emptylist), :m)",
@@ -150,20 +157,20 @@ def lambda_handler(event, context):
                         }
                 )
 
+                log_event_for_user(log_group_name, log_stream_name, "Sending user response: " + response["message"])
                 send_success_response(response["message"], phone_number_id, token, from_number)
             else:
-                print("LLM Response failed" + response["message"])
+                log_event_for_user(log_group_name, log_stream_name, "Failed to receive LLM response: " + response["message"])
                 send_error_response(phone_number_id, token, from_number)
             
             # TODO add some other logic after X messages summarize and update system prompt
             # if int(open_ai_response_payload["usage"]) > 2000:
             #     print("Summarizing chat")
             #     summarize_chat(user_phone_number)
-
-            
-        else:
-            print("missing params")
+        except Exception as e:
+            log_event_for_user(log_group_name, log_stream_name, "Exception in processing message: " + str(e))
             send_error_response(phone_number_id, token, from_number)
-    except Exception as e:
-        logging.exception("Error occurred")
+    else:
+        logger.setLevel('INFO')
+        logger.info("Message processing failed due to missing parameters.")
         send_error_response(phone_number_id, token, from_number)

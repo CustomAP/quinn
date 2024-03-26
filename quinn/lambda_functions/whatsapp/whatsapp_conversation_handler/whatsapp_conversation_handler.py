@@ -2,7 +2,7 @@ import json
 import os
 import boto3
 import logging
-from helper_functions.logging.logging_event import log_event_for_user
+from helper_functions.logging.logging_event import log_event_for_user, create_log_group, create_log_stream
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
@@ -88,28 +88,10 @@ def lambda_handler(event, context):
                     body["entry"][0]["changes"][0].get("value").get("contacts")[0]["wa_id"]):
                 phone_number_id, display_phone_number, from_number, msg_body, user_phone_number, message_id = extract_data(body)
 
-                try:
-                    log_group_name = f'/aws/lambda/{user_phone_number}'
-                    function_name = context.function_name
-                    log_stream_name = f'{function_name}-log-stream'
+                function_name = context.function_name
 
-                    response = logs_client.describe_log_groups(logGroupNamePrefix=log_group_name)
-
-                    if not response['logGroups']:
-                        logs_client.create_log_group(logGroupName=log_group_name)
-                        logs_client.create_log_stream(logGroupName=log_group_name, logStreamName=log_stream_name)
-                        logger.setLevel("INFO")
-                        logger.info("Successfully created log group for user: " + user_phone_number)
-                    else:
-                        logger.setLevel("INFO")
-                        logger.info(f"Log group already exists for user: {user_phone_number}")
-                except Exception as e:
-                    logger.setLevel("ERROR")
-                    logger.error("Error while log group creation for user: " + user_phone_number)
-
-                    return {
-                        'statusCode': 500
-                    }
+                log_group_name = create_log_group(user_phone_number)
+                log_stream_name = create_log_stream(user_phone_number, function_name)
                 
                 log_event_for_user(log_group_name, log_stream_name, "Original message from user: " + msg_body)
 
