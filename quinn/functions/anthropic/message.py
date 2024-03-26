@@ -8,10 +8,10 @@ anthropicClient = anthropic.Anthropic(
 )
 
 def handler(event, context):
-    if "messages" in event:
+    if "messages" in event and "model" in event:
         try:
             response = anthropicClient.messages.create(
-                model="claude-2.1",
+                model=event["model"],
                 max_tokens=1024,
                 messages=event["messages"]
             )

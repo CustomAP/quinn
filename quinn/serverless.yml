@@ -17,6 +17,9 @@ provider:
     quinn_assistant_id: asst_JGVfvgYliLwfYcBag9inMPcQ
     summarizor_assistant_id: asst_TJTe1fdE8nVj07MNtuylfypi
     anthropic_access_key: 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
+    llm: openai
+    anthropic_model: claude-3-haiku-20240307
+    openai_model: gpt-3.5-turbo-0125
 
 functions:
   hello:

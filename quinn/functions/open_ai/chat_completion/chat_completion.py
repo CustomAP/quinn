@@ -9,15 +9,10 @@ openAIClient = OpenAI(
 
 def handler(event, context):
     try:
-        if "message" in event:
-            messages = []
-            if "system_message" in event:
-                messages.append({"role": "system", "content": event["system_message"]})
-            messages.append({"role": "user", "content": event['message']})
-
+        if "messages" in event and "model" in event:
             response = openAIClient.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=messages
+                model=event["model"],
+                messages=event["messages"]
             )
 
             return {

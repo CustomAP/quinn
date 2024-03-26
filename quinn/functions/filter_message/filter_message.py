@@ -1,9 +1,5 @@
-import json
 import logging
-import os
-import boto3
-
-lambdaClient = boto3.client("lambda")
+from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
 
 filteror_system_message ='''
 You are an assistant that modifies a message as:
@@ -15,21 +11,18 @@ Remove phrases like "Feel free to", "I am here for you", "just let me know", "I'
 def handler(event, context):
     try:
         if "message" in event:
-            open_ai_request = {
-                "system_message": filteror_system_message,
-                "message": event["message"]
+            llm_request = {
+                "messages": [
+                    {"role": "system", "content" : filteror_system_message},
+                    {"role": "user", "content" : event["message"]}
+                ]
             }
             
-            open_ai_response = lambdaClient.invoke(
-                FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-open_ai_chat_completion",
-                Payload=json.dumps(open_ai_request)
-            )
-                
-            open_ai_response_payload = json.load(open_ai_response["Payload"])
+            response_payload = stateless_llm_call(llm_request)
 
             return {
-                "success": open_ai_response_payload["success"],
-                "message": open_ai_response_payload["message"],
+                "success": response_payload["success"],
+                "message": response_payload["message"],
             }
         else:
             return {
