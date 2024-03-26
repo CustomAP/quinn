@@ -1,9 +1,14 @@
 import json
 import os
 import boto3
+import datetime
+import logging
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
+logs_client = boto3.client('logs')
+logger = logging.getLogger()
+
 aggregate_interval = 2
 
 dynamodb = boto3.resource("dynamodb")
@@ -71,23 +76,65 @@ def send_message_to_sqs(queue_url, message, user_phone_number):
         MessageGroupId=user_phone_number
     )
 
+def log_event_for_user(log_group_name, log_stream_name, message):
+    log_event = {
+        'timestamp': int(datetime.datetime.now().timestamp()) * 1000,# Timestamp in milliseconds
+        'message': message
+        }
+                    
+    logs_client.put_log_events(
+        logGroupName=log_group_name,
+        logStreamName=log_stream_name,
+        logEvents=[log_event]
+    )
+
 def lambda_handler(event, context):
-    token = os.getenv('WHATSAPP_TOKEN')
-    body = json.loads(event["body"])
-    if body.get("object"):
-        if (body.get("entry") and
-                body["entry"][0].get("changes") and
-                body["entry"][0]["changes"][0].get("value").get("messages") and
-                body["entry"][0]["changes"][0].get("value").get("contacts")[0]["wa_id"]):
-            phone_number_id, display_phone_number, from_number, msg_body, user_phone_number = extract_data(body)
-            print("original message: " + msg_body + " " + from_number + " " + phone_number_id)
-            
-            queue_url = get_or_create_sqs_queue(user_phone_number)
+    try:
+        token = os.getenv('WHATSAPP_TOKEN')
+        body = json.loads(event["body"])
+        if body.get("object"):
+            if (body.get("entry") and
+                    body["entry"][0].get("changes") and
+                    body["entry"][0]["changes"][0].get("value").get("messages") and
+                    body["entry"][0]["changes"][0].get("value").get("contacts")[0]["wa_id"]):
+                phone_number_id, display_phone_number, from_number, msg_body, user_phone_number = extract_data(body)
 
-            trigger_queue_receiver(queue_url, user_phone_number, phone_number_id, token, from_number)
+                try:
+                    log_group_name = f'/aws/lambda/{user_phone_number}'
+                    function_name = context.function_name
+                    log_stream_name = f'{function_name}-log-stream'
 
-            send_message_to_sqs(queue_url, msg_body, user_phone_number)
-            
-            return {
-                "statusCode": 200
-            }
+                    response = logs_client.describe_log_groups(logGroupNamePrefix=log_group_name)
+
+                    if not response['logGroups']:
+                        logs_client.create_log_group(logGroupName=log_group_name)
+                        logs_client.create_log_stream(logGroupName=log_group_name, logStreamName=log_stream_name)
+                        logger.setLevel("INFO")
+                        logger.info("Successfully created log group for user: " + user_phone_number)
+                    else:
+                        logger.setLevel("INFO")
+                        logger.info(f"Log group already exists for user: {user_phone_number}")
+                except Exception as e:
+                    logger.setLevel("ERROR")
+                    logger.error("Error while log group creation for user: " + user_phone_number)
+
+                    return {
+                        'statusCode': 500
+                    }
+                
+                log_event_for_user(log_group_name, log_stream_name, "Original message from user: " + msg_body)
+
+                log_event_for_user(log_group_name, log_stream_name, "Creating/Retriving queue for user")
+                queue_url = get_or_create_sqs_queue(user_phone_number)
+
+                log_event_for_user(log_group_name, log_stream_name, "Triggering polling for queue: " + queue_url)
+                trigger_queue_receiver(queue_url, user_phone_number, phone_number_id, token, from_number)
+
+                log_event_for_user(log_group_name, log_stream_name, "Adding message to the queue.")
+                send_message_to_sqs(queue_url, msg_body, user_phone_number)
+                
+                return {
+                    "statusCode": 200
+                }
+    except Exception as e:
+            log_event_for_user(log_group_name, log_stream_name, "Exception in conversation handler: " + str(e))
