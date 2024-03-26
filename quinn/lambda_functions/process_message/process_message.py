@@ -5,6 +5,7 @@ import requests
 import re
 import time
 import yaml
+import datetime
 from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
 from helper_functions.logging.logging_event import log_event_for_user, create_log_group, create_log_stream
 
@@ -111,11 +112,9 @@ def get_messages(user_phone_number, user_message):
         messages = [{"role": "system", "content": quinn_prompt["system_prompt"]}]
         if total_messages > 0:
             for message in item["messages"][max(total_messages - 49, 0): total_messages]:
-                messages.append(message)
+                messages.append({"role": message["role"], "content": message["content"]})
         
         messages.append({"role": "user", "content": user_message})
-
-        print(messages)
 
         return messages
 
@@ -146,8 +145,8 @@ def lambda_handler(event, context):
             if response["success"]:
                 log_event_for_user(log_group_name, log_stream_name, "Received LLM response.")
                 replies = [
-                    {"role" : "user", "content" : user_message},
-                    {"role": "assistant", "content" : response["message"]}
+                    {"role" : "user", "content" : user_message, "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()},
+                    {"role": "assistant", "content" : response["message"], "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()}
                 ]
                 log_event_for_user(log_group_name, log_stream_name, "Updating table with replies: " + str(replies))
 
@@ -171,6 +170,7 @@ def lambda_handler(event, context):
             #     print("Summarizing chat")
             #     summarize_chat(user_phone_number)
         except Exception as e:
+            print(str(e))
             log_event_for_user(log_group_name, log_stream_name, "Exception in processing message: " + str(e))
             send_error_response(phone_number_id, token, from_number)
     else:
