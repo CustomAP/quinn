@@ -5,6 +5,7 @@ import requests
 import re
 import time
 from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
+import yaml
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table('users')
@@ -102,12 +103,14 @@ def get_messages(user_phone_number, user_message):
 
     total_messages = len(item["messages"]) if "message" in item else 0
 
-    messages = []
-    if total_messages > 0:
-        messages = item["messages"][min(total_messages - 49, 0): total_messages - 1]
-    
-    messages.append({"role": "user", "content": user_message})
-    return messages
+    with open('prompts/quinn.yaml', 'r') as file:
+        quinn_prompt = yaml.safe_load(file)
+        messages = [{"role": "system", "content": quinn_prompt["system_prompt"]}]
+        if total_messages > 0:
+            messages = item["messages"][min(total_messages - 49, 0): total_messages - 1]
+        
+        messages.append({"role": "user", "content": user_message})
+        return messages
 
 def lambda_handler(event, context):
     try:
