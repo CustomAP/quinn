@@ -107,7 +107,7 @@ def get_messages(user_phone_number, user_message):
         quinn_prompt = yaml.safe_load(file)
         messages = [{"role": "system", "content": quinn_prompt["system_prompt"]}]
         if total_messages > 0:
-            messages = item["messages"][min(total_messages - 49, 0): total_messages - 1]
+            messages = item["messages"][max(total_messages - 49, 0): total_messages - 1]
         
         messages.append({"role": "user", "content": user_message})
         return messages
