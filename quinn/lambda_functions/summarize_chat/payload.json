@@ -1,3 +1,4 @@
 {
-    "phone_number": "17819214483"
+  "phone_number": "17819214483",
+  "messages": "[{'role':'user', 'content': 'I hate mangoes'}, {'role':'assistant', 'content': 'what about grapes'}, {'role':'user', 'content': 'I love them'}]"
 }

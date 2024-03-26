@@ -51,6 +51,11 @@ functions:
   queue_receiver:
     handler: lambda_functions/queue_receiver/queue_receiver.lambda_handler
     timeout: 600
+  rough_canvas_stateless_prompt:
+    handler: rough_canvas/prompt_engineering/stateless/stateless_prompt.handler
+    timeout: 30
+    layers:
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
 
 plugins:
   - serverless-python-requirements

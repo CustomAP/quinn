@@ -16,16 +16,19 @@ messages_table = dynamodb.Table('messages')
 lambdaClient = boto3.client("lambda")
 logger = logging.getLogger()
 
-def summarize_chat(user_phone_number):
-    summarize_request= {
-        "phone_number": user_phone_number
-    }
-    
-    lambdaClient.invoke(
-        FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-summarize_chat",
-        Payload=json.dumps(summarize_request),
-        InvocationType="Event"
-    )
+def summarize_chat(user_phone_number, messages, replies):
+    total_messages = messages["total_messages"]
+    if total_messages != 0 and total_messages % 50 == 0:
+        summarize_request= {
+            "phone_number": user_phone_number,
+            "messages": messages["messages"].extend(replies)
+        }
+        
+        lambdaClient.invoke(
+            FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-summarize_chat",
+            Payload=json.dumps(summarize_request),
+            InvocationType="Event"
+        )
 
 def get_user_message(user_phone_number, user_message, is_new_thread):
     message = ""
@@ -116,7 +119,7 @@ def get_messages(user_phone_number, user_message):
         
         messages.append({"role": "user", "content": user_message})
 
-        return messages
+        return {"messages" : messages, "total_messages" : total_messages}
 
 def lambda_handler(event, context):
     if ("user_message" in event and "user_phone_number" in event and
@@ -138,9 +141,9 @@ def lambda_handler(event, context):
         try:
             messages = get_messages(user_phone_number, user_message)
 
-            response = stateless_llm_call({"messages" : messages})
+            response = stateless_llm_call({"messages" : messages["messages"]})
 
-            log_event_for_user(log_group_name, log_stream_name, "Calling statless LLM for message: " + str(messages))
+            log_event_for_user(log_group_name, log_stream_name, "Calling statless LLM for message: " + str(messages["messages"]))
 
             if response["success"]:
                 log_event_for_user(log_group_name, log_stream_name, "Received LLM response.")
@@ -165,10 +168,7 @@ def lambda_handler(event, context):
                 log_event_for_user(log_group_name, log_stream_name, "Failed to receive LLM response: " + str(response["message"]))
                 send_error_response(phone_number_id, token, from_number)
             
-            # TODO add some other logic after X messages summarize and update system prompt
-            # if int(open_ai_response_payload["usage"]) > 2000:
-            #     print("Summarizing chat")
-            #     summarize_chat(user_phone_number)
+            summarize_chat(user_phone_number, messages, replies)
         except Exception as e:
             print(str(e))
             log_event_for_user(log_group_name, log_stream_name, "Exception in processing message: " + str(e))

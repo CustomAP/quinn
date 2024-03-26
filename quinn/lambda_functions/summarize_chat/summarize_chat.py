@@ -3,6 +3,9 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 import logging
+import yaml
+from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
+
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table('users')
@@ -21,49 +24,38 @@ def summarize(summary):
 
 def lambda_handler(event, context):
     try:
-        if "phone_number" in event:
+        if "phone_number" in event and "messages" in event:
             phone_number = event["phone_number"]
+            messages = event["messages"]
+
+            with open("lambda_functions/summarize_chat/summarize.yaml", 'r') as file:
+                summarize_file = yaml.safe_load(file)
+
+                request_messages = [
+                    {"role" : "system", "content": summarize_file["system_prompt"]},
+                    {"role" : "user", "content": json.dumps(messages)}
+                ]
+
+                response = stateless_llm_call({"messages" : request_messages})
+
+                response_json = json.loads(response["message"])
             
-            #TODO - check if can only get the phone number instead of the object
-            user = table.get_item(Key={"phone_number": phone_number})
-            item = user['Item']
-
-            message_start_index = item["message_start_index"]
-            print(item["messages"][int(message_start_index):])
-
-            open_ai_request = {
-                "assistant_id": os.environ.get("summarizor_assistant_id"),
-                "message": json.dumps(item["messages"][int(message_start_index):])
-            }
-            
-            open_ai_response = lambdaClient.invoke(
-                FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-open_ai_assistant_conversation",
-                Payload=json.dumps(open_ai_request)
-            )
-                
-            open_ai_response_payload = json.load(open_ai_response["Payload"])
-
-            if open_ai_response_payload["success"]:
-                summary = open_ai_response_payload["message"]
-
-                likes, hates, did_today, going_to_do_today, going_to_do_later, avoid, next_convo = summarize(summary)
-
-                print("summarize: ", summarize(summary))
+                print("summarize response: ", response_json)
                     
                 table.update_item(
                     Key={"phone_number": phone_number},
-                    UpdateExpression="set likes=list_append(if_not_exists(likes, :emptylist), :l), hates=list_append(if_not_exists(hates, :emptylist), :h), did_today=list_append(if_not_exists(did_today, :emptylist), :did), going_to_do_today=list_append(if_not_exists(going_to_do_today, :emptylist), :today), going_to_do_later=list_append(if_not_exists(going_to_do_later, :emptylist), :later), avoid=list_append(if_not_exists(avoid, :emptylist), :a), next_convo=list_append(if_not_exists(next_convo, :emptylist), :n), message_start_index=:msi, current_thread_id=:t",
+                    UpdateExpression="set loves=list_append(if_not_exists(loves, :emptylist), :loves), likes=list_append(if_not_exists(likes, :emptylist), :likes), hates=list_append(if_not_exists(hates, :emptylist), :hates), dislikes=list_append(if_not_exists(dilikes, :emptylist), :dislikes),did_today=list_append(if_not_exists(did_today, :emptylist), :did), going_to_do_today=list_append(if_not_exists(going_to_do_today, :emptylist), :today), going_to_do_later=list_append(if_not_exists(going_to_do_later, :emptylist), :later), habits=list_append(if_not_exists(habits, :emptylist), :habits), tone=list_append(if_not_exists(tone, :emptylist), :tone)",
                     ExpressionAttributeValues={
-                        ":l": [likes],
-                        ":h": [hates],
-                        ":did": [did_today],
-                        ":today": [going_to_do_today],
-                        ":later": [going_to_do_later],
-                        ":a": [avoid],
-                        ":n": [next_convo],
-                        ":msi": len(item["messages"]) - 1,
-                        ":emptylist": [],
-                        ":t": ""
+                        ":loves": response_json["Things the user loves"],
+                        ":likes": response_json["Things the user likes"],
+                        ":hates": response_json["Things the user hates"],
+                        ":dislikes": response_json["Things the user dislikes"],
+                        ":did": response_json["Things the user did today"],
+                        ":today": response_json["Things the user is going to do today"],
+                        ":later": response_json["Things the user is going to do tommorrow or later"],
+                        ":habits": response_json["Habits of the user"],
+                        ":tone": response_json["Tone of the user"],
+                        ":emptylist": []
                         }
                     # UpdateExpression="set summaries=:s, current_thread_id=:t",
                     # ExpressionAttributeValues={":s": user["summaries"], ":t": ""}
@@ -72,15 +64,10 @@ def lambda_handler(event, context):
                 return {
                     'success': True
                 }
-            else:
-                return {
-                    'success': False,
-                    'message': open_ai_response_payload["message"]
-                }
         else:
             return {
                 'success': False,
-                'message': "No phone number sent in params"
+                'message': "Missing params"
             }
     except Exception as e:
         logging.exception("Exception occurred")
