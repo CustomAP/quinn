@@ -37,6 +37,9 @@ functions:
   whatsapp_conversation_handler:
     handler: lambda_functions/whatsapp/whatsapp_conversation_handler/whatsapp_conversation_handler.lambda_handler
     timeout: 30
+  whatsapp_mark_as_read:
+    handler: lambda_functions/whatsapp/whatsapp_mark_as_read/whatsapp_mark_as_read.lambda_handler
+    timeout: 30
   summarize_chat:
     handler: lambda_functions/summarize_chat/summarize_chat.lambda_handler
     timeout: 30

@@ -22,6 +22,9 @@ def update_table(user_phone_number):
             }
     )
 
+def mark_message_as_read(user_phone_number, message_id):
+    pass
+
 def process_messages(user_phone_number, phone_number_id, token, from_number):
     aggregated_message = ""
     for message in messages:
