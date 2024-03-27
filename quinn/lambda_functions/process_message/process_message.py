@@ -18,10 +18,11 @@ logger = logging.getLogger()
 
 def summarize_chat(user_phone_number, messages, replies):
     total_messages = messages["total_messages"]
+    messages["messages"].extend(replies)
     if total_messages != 0 and total_messages % 50 == 0:
         summarize_request= {
             "phone_number": user_phone_number,
-            "messages": messages["messages"].extend(replies)
+            "messages": messages["messages"]
         }
         
         lambdaClient.invoke(

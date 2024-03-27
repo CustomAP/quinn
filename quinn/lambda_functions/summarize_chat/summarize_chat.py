@@ -39,8 +39,6 @@ def lambda_handler(event, context):
                 response = stateless_llm_call({"messages" : request_messages})
 
                 response_json = json.loads(response["message"])
-            
-                print("summarize response: ", response_json)
                     
                 table.update_item(
                     Key={"phone_number": phone_number},

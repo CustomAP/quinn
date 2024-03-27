@@ -45,6 +45,8 @@ functions:
   summarize_chat:
     handler: lambda_functions/summarize_chat/summarize_chat.lambda_handler
     timeout: 30
+    layers:
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
   filter_message:
     handler: lambda_functions/filter_message/filter_message.handler
     timeout: 30
