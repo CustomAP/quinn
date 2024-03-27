@@ -1,2 +1,3 @@
 openai==1.14.2
 anthropic==0.21.3
+pinecone-client==3.2.1
