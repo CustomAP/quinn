@@ -12,8 +12,8 @@ def handler(event, context):
     try:
         if "message" in event:
             llm_request = {
+                "system_prompt" : filteror_system_message,
                 "messages": [
-                    {"role": "system", "content" : filteror_system_message},
                     {"role": "user", "content" : event["message"]}
                 ]
             }

@@ -22,6 +22,14 @@ def summarize(summary):
     next_convo = summary.split("Things you should bring up in your next conversation (cliffhangers):")[1].strip()
     return (likes, hates, did_today, going_to_do_today, going_to_do_later, avoid, next_convo)
 
+def format_messages(messages):
+    formatted_messages = ""
+    print(messages)
+    for message in messages:
+        message['content'].replace("\n", " ")
+        formatted_messages += f"{message['role']} : {message['content']}\n"
+    return formatted_messages
+
 def lambda_handler(event, context):
     try:
         if "phone_number" in event and "messages" in event:
@@ -31,12 +39,12 @@ def lambda_handler(event, context):
             with open("lambda_functions/summarize_chat/summarize.yaml", 'r') as file:
                 summarize_file = yaml.safe_load(file)
 
-                request_messages = [
-                    {"role" : "system", "content": summarize_file["system_prompt"]},
-                    {"role" : "user", "content": json.dumps(messages)}
-                ]
+                formatted_messages = format_messages(json.loads(messages))
 
-                response = stateless_llm_call({"messages" : request_messages})
+                response = stateless_llm_call({
+                    "system_prompt": summarize_file["system_prompt"],
+                    "messages" : [{"role" : "user", "content": json.dumps(formatted_messages)}]
+                    })
 
                 response_json = json.loads(response["message"])
                     

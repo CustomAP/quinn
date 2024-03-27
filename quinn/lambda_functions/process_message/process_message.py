@@ -111,16 +111,19 @@ def get_messages(user_phone_number, user_message):
 
     total_messages = len(item["messages"]) if "messages" in item else 0
 
+    quinn_prompt = ""
     with open('prompts/quinn.yaml', 'r') as file:
         quinn_prompt = yaml.safe_load(file)
-        messages = [{"role": "system", "content": quinn_prompt["system_prompt"]}]
-        if total_messages > 0:
-            for message in item["messages"][max(total_messages - 49, 0): total_messages]:
-                messages.append({"role": message["role"], "content": message["content"]})
-        
-        messages.append({"role": "user", "content": user_message})
+        quinn_prompt = quinn_prompt["system_prompt"]
 
-        return {"messages" : messages, "total_messages" : total_messages}
+    messages = []
+    if total_messages > 0:
+        for message in item["messages"][max(total_messages - 49, 0): total_messages]:
+            messages.append({"role": message["role"], "content": message["content"]})
+    
+    messages.append({"role": "user", "content": user_message})
+
+    return {"system_prompt" : quinn_prompt, "messages" : messages, "total_messages" : total_messages}
 
 def lambda_handler(event, context):
     if ("user_message" in event and "user_phone_number" in event and
@@ -142,7 +145,10 @@ def lambda_handler(event, context):
         try:
             messages = get_messages(user_phone_number, user_message)
 
-            response = stateless_llm_call({"messages" : messages["messages"]})
+            response = stateless_llm_call({
+                "system_prompt": messages["system_prompt"],
+                "messages" : messages["messages"]
+                })
 
             log_event_for_user(log_group_name, log_stream_name, "Calling statless LLM for message: " + str(messages["messages"]))
 
@@ -165,11 +171,10 @@ def lambda_handler(event, context):
 
                 log_event_for_user(log_group_name, log_stream_name, "Sending user response: " + str(response["message"]))
                 send_success_response(response["message"], phone_number_id, token, from_number)
+                summarize_chat(user_phone_number, messages, replies)
             else:
                 log_event_for_user(log_group_name, log_stream_name, "Failed to receive LLM response: " + str(response["message"]))
                 send_error_response(phone_number_id, token, from_number)
-            
-            summarize_chat(user_phone_number, messages, replies)
         except Exception as e:
             print(str(e))
             log_event_for_user(log_group_name, log_stream_name, "Exception in processing message: " + str(e))
