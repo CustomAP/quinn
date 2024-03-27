@@ -1,9 +1,6 @@
 import json
 import boto3
 import logging
-import requests
-import re
-import time
 import yaml
 import datetime
 from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
@@ -11,6 +8,7 @@ from helper_functions.logging.logging_event import log_event_for_user, create_lo
 from helper_functions.messages.format import format_messages_for_summary
 from helper_functions.pinecone.index_actions import query_index
 from helper_functions.llm_wrapper.open_ai.embeddings.embeddings import openai_embeddings
+from helper_functions.whatsapp.whatsapp_response import send_error_response, send_success_response
 
 
 dynamodb = boto3.resource("dynamodb")
@@ -34,32 +32,6 @@ def summarize_chat(user_phone_number, messages, replies):
             Payload=json.dumps(summarize_request),
             InvocationType="Event"
         )
-    
-def send_success_response(response, phone_number_id, token, from_number):
-    messages = re.findall('[^.?!\n]+.?', response)
-
-    for message in messages:
-        requests.post(
-            f"https://graph.facebook.com/v18.0/{phone_number_id}/messages?access_token={token}",
-            json={
-                "messaging_product": "whatsapp",
-                "to": from_number,
-                "text": {"body": str(message).strip()}
-            },
-            headers={"Content-Type": "application/json"}
-        )
-        time.sleep(2)
-    
-def send_error_response(phone_number_id, token, from_number):
-    requests.post(
-        f"https://graph.facebook.com/v18.0/{phone_number_id}/messages?access_token={token}",
-        json={
-            "messaging_product": "whatsapp",
-            "to": from_number,
-            "text": {"body": "Sorry something went wrong!"}
-        },
-        headers={"Content-Type": "application/json"}
-    )
 
 def get_messages(user_phone_number, user_message):
     message_table_result = messages_table.get_item(Key={"phone_number": user_phone_number})
