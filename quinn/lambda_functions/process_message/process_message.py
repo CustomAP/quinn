@@ -109,8 +109,6 @@ def get_messages(user_phone_number, user_message):
     message_table_result = messages_table.get_item(Key={"phone_number": user_phone_number})
     item = message_table_result['Item']
 
-    print(item["messages"])
-
     total_messages = len(item["messages"]) if "messages" in item else 0
 
     with open('prompts/quinn.yaml', 'r') as file:
