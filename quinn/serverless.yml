@@ -27,7 +27,7 @@ functions:
     handler: lambda_functions/process_message/process_message.lambda_handler
     timeout: 30
     layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:2
       - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p310-requests:9
   whatsapp_entrypoint:
     handler: lambda_functions/whatsapp/whatsapp_entrypoint/whatsapp_entrypoint.lambda_handler
@@ -47,7 +47,7 @@ functions:
     handler: lambda_functions/summarize_chat/summarize_chat.lambda_handler
     timeout: 30
     layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:2
   filter_message:
     handler: lambda_functions/filter_message/filter_message.handler
     timeout: 30
@@ -58,7 +58,7 @@ functions:
     handler: rough_canvas/prompt_engineering/stateless/stateless_prompt.handler
     timeout: 30
     layers:
-      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:1
+      - arn:aws:lambda:us-east-2:471112961630:layer:python-models:2
 
 plugins:
   - serverless-python-requirements
