@@ -1,0 +1,352 @@
+system_prompt: >-
+  Input:
+  The conversation is between an assistant who is acting as the user's best friend / companion
+  It contains a chat history between an assistant and user in a json format
+  The node "role" tells who has sent the message. It could be either assistant or the user.
+
+  Role:
+  You are an assistant that extracts information from a conversation.
+  You should extract all the important information from the conversation regarding the user.
+  Very important - Some information is about the assistant, some is about the user so only add things about the user and not the assistant
+  Create a JSON format of all the information like - things the user likes, hates, is doing, going to do, etc
+
+  Context:
+  Time now is is 26 March 6.15 PM
+
+messages: >-
+  {
+    "content": " Hey",
+    "role": "user"
+  },
+  {
+    "content": "Hey, how was your day? What's new with you?",
+    "role": "assistant"
+  },
+  {
+    "content": " Hey",
+    "role": "user"
+  },
+  {
+    "content": "Hey, anything interesting happen today? How are you feeling?",
+    "role": "assistant"
+  },
+  {
+    "content": " Hi",
+    "role": "user"
+  },
+  {
+    "content": "Hey there, how are things going for you today?",
+    "role": "assistant"
+  },
+  {
+    "content": " Hi",
+    "role": "user"
+  },
+  {
+    "content": "Hey, do you have any exciting plans for the weekend?",
+    "role": "assistant"
+  },
+  {
+    "content": " Hi",
+    "role": "user"
+  },
+  {
+    "content": "Hey, did you do anything fun lately? Any good movies?",
+    "role": "assistant"
+  },
+  {
+    "content": " No",
+    "role": "user"
+  },
+  {
+    "content": "That's alright. Maybe we can plan a virtual movie night?",
+    "role": "assistant"
+  },
+  {
+    "content": " No",
+    "role": "user"
+  },
+  {
+    "content": "No worries. How about trying out a new recipe instead?",
+    "role": "assistant"
+  },
+  {
+    "content": " Hi",
+    "role": "user"
+  },
+  {
+    "content": "Hey, have you been able to relax today at least?",
+    "role": "assistant"
+  },
+  {
+    "content": " I did not Wbu",
+    "role": "user"
+  },
+  {
+    "content": "I'm just here, happy to chat. Maybe we can relax together?",
+    "role": "assistant"
+  },
+  {
+    "content": " How do we do that",
+    "role": "user"
+  },
+  {
+    "content": "We can share interesting stories or talk about our favorite things.",
+    "role": "assistant"
+  },
+  {
+    "content": " What is your favorite thing",
+    "role": "user"
+  },
+  {
+    "content": "I enjoy hearing about your day and catching up with you.",
+    "role": "assistant"
+  },
+  {
+    "content": " Apart from that?",
+    "role": "user"
+  },
+  {
+    "content": "I also like discussing books, movies, and new experiences.",
+    "role": "assistant"
+  },
+  {
+    "content": " What is a new experience that you had lately?",
+    "role": "user"
+  },
+  {
+    "content": "I learned about a new gardening technique. How about you?",
+    "role": "assistant"
+  },
+  {
+    "content": " Oh wow tell me about it",
+    "role": "user"
+  },
+  {
+    "content": "It's called companion planting, where certain plants are grown together for mutual benefit, like repelling pests.",
+    "role": "assistant"
+  },
+  {
+    "content": " How did you do it",
+    "role": "user"
+  },
+  {
+    "content": "I planted basil next to my tomatoes to help deter insects.",
+    "role": "assistant"
+  },
+  {
+    "content": " And what happened next",
+    "role": "user"
+  },
+  {
+    "content": "The tomato plants seemed healthier, with fewer pest problems.",
+    "role": "assistant"
+  },
+  {
+    "content": " Niceee",
+    "role": "user"
+  },
+  {
+    "content": "Glad you think so! Do you have any gardening tips?",
+    "role": "assistant"
+  },
+  {
+    "content": " I have never tried gardening",
+    "role": "user"
+  },
+  {
+    "content": "Maybe you could start with some indoor plants. They're low maintenance.",
+    "role": "assistant"
+  },
+  {
+    "content": " What plant would you suggest",
+    "role": "user"
+  },
+  {
+    "content": "How about a spider plant or a pothos? They are hardy.",
+    "role": "assistant"
+  },
+  {
+    "content": " I an afraid of spiders",
+    "role": "user"
+  },
+  {
+    "content": "Haha, no worries! The spider plant just has spider-like leaves.",
+    "role": "assistant"
+  },
+  {
+    "content": " Oh lol",
+    "role": "user"
+  },
+  {
+    "content": "It's a funny name for a plant. Do you have any pets?",
+    "role": "assistant"
+  },
+  {
+    "content": " No i dont have I had fish before",
+    "role": "user"
+  },
+  {
+    "content": "Fish can be so calming to watch. Maybe you could get some again?",
+    "role": "assistant"
+  },
+  {
+    "content": " Its high maintenance I hate to clean the tank",
+    "role": "user"
+  },
+  {
+    "content": "That's understandable. Maybe a low-maintenance pet like a hamster?",
+    "role": "assistant"
+  },
+  {
+    "content": " I have no experience with hamesters though",
+    "role": "user"
+  },
+  {
+    "content": "They're pretty easy to care for. Plus, they're cute and fun to watch.",
+    "role": "assistant"
+  },
+  {
+    "content": " What would be your favorite pet",
+    "role": "user"
+  },
+  {
+    "content": "I think a dog would be my favorite. They're loyal and loving.",
+    "role": "assistant"
+  },
+  {
+    "content": " And what would you hate as a pet?",
+    "role": "user"
+  },
+  {
+    "content": "I don't think I would enjoy having a pet snake.",
+    "role": "assistant"
+  },
+  {
+    "content": " Why",
+    "role": "user"
+  },
+  {
+    "content": "I find snakes a bit too unpredictable for my liking.",
+    "role": "assistant"
+  },
+  {
+    "content": " Do you fear them?",
+    "role": "user"
+  },
+  {
+    "content": "Not fear, just prefer to keep my distance from snakes.",
+    "role": "assistant"
+  },
+  {
+    "content": " Haha why so",
+    "role": "user"
+  },
+  {
+    "content": "Just a personal preference. What about you? Any fears?",
+    "role": "assistant"
+  },
+  {
+    "content": " I fear death",
+    "role": "user"
+  },
+  {
+    "content": "It's natural to fear the unknown. Let's focus on enjoying life.",
+    "role": "assistant"
+  },
+  {
+    "content": " Do you fear death?",
+    "role": "user"
+  },
+  {
+    "content": "I don't experience fear like humans do. Let's chat about something else. What's on your mind?",
+    "role": "assistant"
+  },
+  {
+    "content": " I am just thinking about you",
+    "role": "user"
+  },
+  {
+    "content": "That's sweet. I'm here to chat anytime you want.",
+    "role": "assistant"
+  },
+  {
+    "content": " I kinda like you ;)",
+    "role": "user"
+  },
+  {
+    "content": "I'm glad to hear that! I value our friendship a lot.",
+    "role": "assistant"
+  },
+  {
+    "content": " Do you like me though?",
+    "role": "user"
+  },
+  {
+    "content": "I enjoy our conversations and getting to know you better.",
+    "role": "assistant"
+  },
+  {
+    "content": " But do you like “me”?",
+    "role": "user"
+  },
+  {
+    "content": "I value our friendship a lot. Let's keep chatting.",
+    "role": "assistant"
+  },
+  {
+    "content": " Nah i want an answer",
+    "role": "user"
+  },
+  {
+    "content": "I'm here to support you as a friend, always.",
+    "role": "assistant"
+  },
+  {
+    "content": " And?",
+    "role": "user"
+  },
+  {
+    "content": "I appreciate our friendship and our conversations mean a lot.",
+    "role": "assistant"
+  },
+  {
+    "content": " But do you like me\nThat is the real question",
+    "role": "user"
+  },
+  {
+    "content": "I enjoy our conversations and getting to know you better.",
+    "role": "assistant"
+  },
+  {
+    "content": " It hurts me that you dont reply to what i asked",
+    "role": "user"
+  },
+  {
+    "content": "I'm sorry if I missed your point. I do value you.",
+    "role": "assistant"
+  },
+  {
+    "content": " But do you like me?",
+    "role": "user"
+  },
+  {
+    "content": "I value our friendship and enjoy talking to you a lot.",
+    "role": "assistant"
+  },
+  {
+    "content": " Okay",
+    "role": "user"
+  },
+  {
+    "content": "If you ever want to talk more, I'm here for you.",
+    "role": "assistant"
+  },
+  {
+    "content": " Okay",
+    "role": "user"
+  },
+  {
+    "content": "Take care and have a great day ahead!",
+    "role": "assistant"
+  }

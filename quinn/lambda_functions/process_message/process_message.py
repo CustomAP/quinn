@@ -106,8 +106,10 @@ def send_error_response(phone_number_id, token, from_number):
     )
 
 def get_messages(user_phone_number, user_message):
-    user = messages_table.get_item(Key={"phone_number": user_phone_number})
-    item = user['Item']
+    message_table_result = messages_table.get_item(Key={"phone_number": user_phone_number})
+    item = message_table_result['Item']
+
+    print(item["messages"])
 
     total_messages = len(item["messages"]) if "messages" in item else 0
 
