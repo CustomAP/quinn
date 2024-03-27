@@ -21,7 +21,7 @@ def lambda_handler(event, context):
             phone_number = event["phone_number"]
             messages = event["messages"]
 
-            with open("lambda_functions/summarize_chat/summarize.yaml", 'r') as file:
+            with open("prompts/summarize_chat.yaml", 'r') as file:
                 summarize_file = yaml.safe_load(file)
 
                 formatted_messages = format_messages_for_summary(json.loads(messages))

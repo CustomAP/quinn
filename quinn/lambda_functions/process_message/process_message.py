@@ -54,14 +54,11 @@ def get_messages(user_phone_number, user_message):
     return {"system_prompt" : quinn_prompt, "messages" : messages, "total_messages" : total_messages}
 
 def get_messages_with_context(user_phone_number, messages):
-    system_prompt = '''
-Role:
-You will be given a conversation between Assistant and the user.
-You have to create a summarization including all entities in the context.
+    summarize_prompt = ""
+    with open('prompts/summarize_messages.yaml', 'r') as file:
+        summarize_prompt = yaml.safe_load(file)
+        summarize_prompt = summarize_prompt["system_prompt"]
 
-Output format (very important):
-Reply with maximum of 10 words
-'''
     context_messages = messages[max(len(messages) - 5, 0): len(messages)]
     print("here")
     formatted_message = format_messages_for_summary(context_messages)
@@ -69,7 +66,7 @@ Reply with maximum of 10 words
     print(formatted_message)
 
     response = stateless_llm_call({
-        "system_prompt": system_prompt,
+        "system_prompt": summarize_prompt,
         "messages" : [{"role": "user", "content": formatted_message}]
     })
 
