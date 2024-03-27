@@ -8,6 +8,10 @@ import yaml
 import datetime
 from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
 from helper_functions.logging.logging_event import log_event_for_user, create_log_group, create_log_stream
+from helper_functions.messages.format import format_messages_for_summary
+from helper_functions.pinecone.index_actions import query_index
+from helper_functions.llm_wrapper.open_ai.embeddings.embeddings import openai_embeddings
+
 
 dynamodb = boto3.resource("dynamodb")
 usersTable = dynamodb.Table('users')
@@ -30,54 +34,6 @@ def summarize_chat(user_phone_number, messages, replies):
             Payload=json.dumps(summarize_request),
             InvocationType="Event"
         )
-
-def get_user_message(user_phone_number, user_message, is_new_thread):
-    message = ""
-    if is_new_thread:
-        user = usersTable.get_item(Key={"phone_number": user_phone_number})
-        item = user['Item']
-        if "likes" in item or "hates" in item or "did_today" in item or "going_to_do_today" in item or "going_to_do_later" in item or "avoid" in item or "next_convo" in item:
-            message = "Metadata from previous conversations:\n"
-        if "likes" in item:
-            message += f"Things the user likes:\n{json.dumps(item['likes'])}\n"
-        if "hates" in item:
-            message += f"Things the user hates:\n{json.dumps(item['hates'])}\n"
-        # if "did_today" in item:
-        #     message += f"Things the user did today:{json.dumps(item['did_today'])}\n"
-        # if "going_to_do_today" in item:
-        #     message += f"Things the user is going to do today:{json.dumps(item['going_to_do_today'])}\n"
-        # if "going_to_do_later" in item:
-        #     message += f"Things the user is going to do tomorrow or later:{json.dumps(item['going_to_do_later'])}\n" 
-        if "avoid" in item:
-            message += f"Things you should avoid talking about with the user:{json.dumps(item['avoid'])}\n"
-        # if "next_convo" in item:
-        #     message += f"Things you could bring up in your next conversation (cliffhangers):{json.dumps(item['next_convo'])}"
-    
-        if "messages" in item and len(item["messages"]) > 10:
-            message += f"Last 10 messages:\n{json.dumps(item['messages'][len(item['messages']) - 10:])}"
-
-        message += f"Current message:\n{user_message}"
-    else:
-        message = user_message
-    return message
-
-def filter_message(message):
-    print("Message before filtering" + message)
-    filter_request = {
-        "message": message
-    }
-    
-    filter_response = lambdaClient.invoke(
-        FunctionName="arn:aws:lambda:us-east-2:471112961630:function:quinn-dev-filter_message",
-        Payload=json.dumps(filter_request)
-    )
-
-    filter_response_payload = json.load(filter_response["Payload"])
-    if filter_response_payload["success"]:
-        print("Message after filtering" + filter_response_payload["message"])
-        return filter_response_payload["message"]
-    else:
-        raise "Failed to filter message"
     
 def send_success_response(response, phone_number_id, token, from_number):
     messages = re.findall('[^.?!\n]+.?', response)
@@ -125,6 +81,43 @@ def get_messages(user_phone_number, user_message):
 
     return {"system_prompt" : quinn_prompt, "messages" : messages, "total_messages" : total_messages}
 
+def get_messages_with_context(user_phone_number, messages):
+    system_prompt = '''
+Role:
+You will be given a conversation between Assistant and the user.
+You have to create a summarization including all entities in the context.
+
+Output format (very important):
+Reply with maximum of 10 words
+'''
+    context_messages = messages[max(len(messages) - 5, 0): len(messages)]
+    print("here")
+    formatted_message = format_messages_for_summary(context_messages)
+
+    print(formatted_message)
+
+    response = stateless_llm_call({
+        "system_prompt": system_prompt,
+        "messages" : [{"role": "user", "content": formatted_message}]
+    })
+
+    print(response["message"])
+
+    query_embeddings = openai_embeddings(response["message"])
+
+    print(query_embeddings)
+
+    query_response = query_index(user_phone_number, query_embeddings, top_k=1)
+
+    print(query_response)
+
+    all_messages = [{"role": "user", "content": f'Previous context if needed: {str(query_response)}'}]
+    all_messages.extend(messages)
+
+    print(all_messages)
+    
+    return all_messages    
+
 def lambda_handler(event, context):
     if ("user_message" in event and "user_phone_number" in event and
         "phone_number_id" in event and "token" in event and
@@ -145,9 +138,11 @@ def lambda_handler(event, context):
         try:
             messages = get_messages(user_phone_number, user_message)
 
+            messages_with_context = get_messages_with_context(user_phone_number, messages["messages"])
+
             response = stateless_llm_call({
                 "system_prompt": messages["system_prompt"],
-                "messages" : messages["messages"]
+                "messages" : messages_with_context
                 })
 
             log_event_for_user(log_group_name, log_stream_name, "Calling statless LLM for message: " + str(messages["messages"]))

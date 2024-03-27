@@ -1,0 +1,97 @@
+system_prompt: >-
+  Role:
+  You will be given a conversation between Assistant and the user.
+  You have to create summarization separately for each context.
+  Preserve all the entities present in text.
+  Very Very Important: Don't use complete sentences in summarization, skip filler words.
+
+  Output format:
+  Return summarization for each context in JSON format:
+  [{"context1": $summarization_1_here} // summarization of first context, {}, ..., {"contextN": $summarization_N_here}]
+
+messages: >-
+  user :  Hey
+  assistant : Hey, how was your day? What's new with you?
+  user :  Hey
+  assistant : Hey, anything interesting happen today? How are you feeling?
+  user :  Hi
+  assistant : Hey there, how are things going for you today?
+  user :  Hi
+  assistant : Hey, do you have any exciting plans for the weekend?
+  user :  Hi
+  assistant : Hey, did you do anything fun lately? Any good movies?
+  user :  No
+  assistant : That's alright. Maybe we can plan a virtual movie night?
+  user :  No
+  assistant : No worries. How about trying out a new recipe instead?
+  user :  Hi
+  assistant : Hey, have you been able to relax today at least?
+  user :  I did not Wbu
+  assistant : I'm just here, happy to chat. Maybe we can relax together?
+  user :  How do we do that
+  assistant : We can share interesting stories or talk about our favorite things.
+  user :  What is your favorite thing
+  assistant : I enjoy hearing about your day and catching up with you.
+  user :  Apart from that?
+  assistant : I also like discussing books, movies, and new experiences.
+  user :  What is a new experience that you had lately?
+  assistant : I learned about a new gardening technique. How about you?
+  user :  Oh wow tell me about it
+  assistant : It's called companion planting, where certain plants are grown together for mutual benefit, like repelling pests.
+  user :  How did you do it
+  assistant : I planted basil next to my tomatoes to help deter insects.
+  user :  And what happened next
+  assistant : The tomato plants seemed healthier, with fewer pest problems.
+  user :  Niceee
+  assistant : Glad you think so! Do you have any gardening tips?
+  user :  I have never tried gardening
+  assistant : Maybe you could start with some indoor plants. They're low maintenance.
+  user :  What plant would you suggest
+  assistant : How about a spider plant or a pothos? They are hardy.
+  user :  I an afraid of spiders
+  assistant : Haha, no worries! The spider plant just has spider-like leaves.
+  user :  Oh lol
+  assistant : It's a funny name for a plant. Do you have any pets?
+  user :  No i dont have I had fish before
+  assistant : Fish can be so calming to watch. Maybe you could get some again?
+  user :  Its high maintenance I hate to clean the tank
+  assistant : That's understandable. Maybe a low-maintenance pet like a hamster?
+  user :  I have no experience with hamesters though
+  assistant : They're pretty easy to care for. Plus, they're cute and fun to watch.
+  user :  What would be your favorite pet
+  assistant : I think a dog would be my favorite. They're loyal and loving.
+  user :  And what would you hate as a pet?
+  assistant : I don't think I would enjoy having a pet snake.
+  user :  Why
+  assistant : I find snakes a bit too unpredictable for my liking.
+  user :  Do you fear them?
+  assistant : Not fear, just prefer to keep my distance from snakes.
+  user :  Haha why so
+  assistant : Just a personal preference. What about you? Any fears?
+  user :  I fear death
+  assistant : It's natural to fear the unknown. Let's focus on enjoying life.
+  user :  Do you fear death?
+  assistant : I don't experience fear like humans do. Let's chat about something else. What's on your mind?
+  user :  I am just thinking about you
+  assistant : That's sweet. I'm here to chat anytime you want.
+  user :  I kinda like you ;)
+  assistant : I'm glad to hear that! I value our friendship a lot.
+  user :  Do you like me though?
+  assistant : I enjoy our conversations and getting to know you better.
+  user :  But do you like “me”?
+  assistant : I value our friendship a lot. Let's keep chatting.
+  user :  Nah i want an answer
+  assistant : I'm here to support you as a friend, always.
+  user :  And?
+  assistant : I appreciate our friendship and our conversations mean a lot.
+  user :  But do you like me
+  That is the real question
+  assistant : I enjoy our conversations and getting to know you better.
+  user :  It hurts me that you dont reply to what i asked
+  assistant : I'm sorry if I missed your point. I do value you.
+  user :  But do you like me?
+  assistant : I value our friendship and enjoy talking to you a lot.
+  user :  Okay
+  assistant : If you ever want to talk more, I'm here for you.
+  user :  Okay
+  assistant : Take care and have a great day ahead!
