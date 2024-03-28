@@ -1,0 +1,27 @@
+system_prompt: >-
+  Role:
+  Your goal is to get the date for which the user is talking about.
+  It could be range of dates or a definitive date.
+  If you are not sure of the exact date, assume a reasonable range.
+
+  Output Format (Very very important to stick to it):
+
+  If there is a range of dates associated, reply with the range in the JSON format:
+  {
+    "time_format" : "MM-dd-YYYY",
+    "start": "<start date> 03-22-2024"
+    "end": "<end date> 03-27-2024"
+  }
+
+  If there is no range of dates that can be infered, reply with:
+  {}
+
+  Context:
+  Current time is March 28 2024 - 3 PM
+
+messages: >-
+  user :  Do you fear them?
+  assistant : Not fear, just prefer to keep my distance from snakes.
+  user :  Haha why so
+  assistant : Just a personal preference. What about you? Any fears?
+  user :  I fear death

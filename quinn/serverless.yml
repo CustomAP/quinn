@@ -59,6 +59,9 @@ functions:
     timeout: 30
     layers:
       - arn:aws:lambda:us-east-2:471112961630:layer:python-models:2
+  helper_runner:
+    handler: helper_functions/helper_runner.handler
+    timeout: 30
 
 plugins:
   - serverless-python-requirements
