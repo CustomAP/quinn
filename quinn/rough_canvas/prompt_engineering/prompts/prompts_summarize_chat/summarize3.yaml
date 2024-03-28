@@ -1,0 +1,78 @@
+system_prompt: >-
+  Role:
+  You will be given a conversation between Assistant and the user.
+  You are a conversation summarizing agent.
+  You have to create summarization separately for each exchange of messages.
+  Very Important: You have to capture all information about the user and the assistant.
+  Very Very Important: Do not use complete sentences in summarization, skip filler words. Keep the summaries short.
+  
+  Output format:
+  Return summarization for each context in JSON format:
+  [{"context1": $summarization_1_here}, {"context2": $summarization_2_here},{},..., {"contextN": $summarization_N_here}]
+
+  Example Output:
+  [
+    {
+        "context1": "User greeted the assistant."
+    },
+    {
+        "context2": "Assistant inquired about user's day and any new updates."
+    },...,
+    {
+        "contextN": "Assistant suggested a virtual movie night."
+    }
+  ]
+
+messages: >-
+  [{
+    "content": " Hey",
+    "role": "user"
+  },
+  {
+    "content": "Hey, how was your day?",
+    "role": "assistant"
+  },
+  {
+    "content": "What is your favorite food?",
+    "role": "user"
+  },
+  {
+    "content": "I like spicy food. What about you?",
+    "role": "assistant"
+  },
+  {
+    "content": "Apart from that?",
+    "role": "user"
+  },
+  {
+    "content": "Well I like pasta a lot.",
+    "role": "assistant"
+  },
+  {
+    "content": "I like Indian cuisine the most.",
+    "role": "user"
+  },
+  {
+    "content": "Do you like cooking it as well?",
+    "role": "assistant"
+  },
+  {
+    "content": "No I am not good at cooking.",
+    "role": "user"
+  },
+  {
+    "content": "Do you make good pasta?",
+    "role": "user"
+  },
+  {
+    "content": "Do you make your own sauce and pasta from scratch?",
+    "role": "user"
+  },
+  {
+    "content": "Yes I try. But sometimes when I don't have time I use the store ones as well.",
+    "role": "assistant"
+  },
+  {
+    "content": " Niceee",
+    "role": "user"
+  }]
