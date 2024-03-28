@@ -7,3 +7,9 @@ system_prompt: >-
 
   Output format (very important):
   Reply with maximum of 10 words
+
+messages: >-
+  assistant : I also like discussing books, movies, and new experiences.
+  user :  What is a new experience that you had lately?
+  assistant : I learned about a new gardening technique. How about you?
+  user :  Oh wow tell me about it
