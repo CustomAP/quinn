@@ -5,10 +5,8 @@ import yaml
 import datetime
 from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
 from helper_functions.logging.logging_event import log_event_for_user, create_log_group, create_log_stream
-from helper_functions.messages.format import format_messages_for_summary
-from helper_functions.pinecone.index_actions import query_index
-from helper_functions.llm_wrapper.open_ai.embeddings.embeddings import openai_embeddings
 from helper_functions.whatsapp.whatsapp_response import send_error_response, send_success_response
+from lambda_functions.process_message.context_augmenter.context_augmenter import get_messages_with_context
 
 
 dynamodb = boto3.resource("dynamodb")
@@ -52,40 +50,6 @@ def get_messages(user_phone_number, user_message):
     messages.append({"role": "user", "content": user_message})
 
     return {"system_prompt" : quinn_prompt, "messages" : messages, "total_messages" : total_messages}
-
-def get_messages_with_context(user_phone_number, messages):
-    summarize_prompt = ""
-    with open('prompts/summarize_messages.yaml', 'r') as file:
-        summarize_prompt = yaml.safe_load(file)
-        summarize_prompt = summarize_prompt["system_prompt"]
-
-    context_messages = messages[max(len(messages) - 5, 0): len(messages)]
-    print("here")
-    formatted_message = format_messages_for_summary(context_messages)
-
-    print(formatted_message)
-
-    response = stateless_llm_call({
-        "system_prompt": summarize_prompt,
-        "messages" : [{"role": "user", "content": formatted_message}]
-    })
-
-    print(response["message"])
-
-    query_embeddings = openai_embeddings(response["message"])
-
-    print(query_embeddings)
-
-    query_response = query_index(user_phone_number, query_embeddings, top_k=1)
-
-    print(query_response)
-
-    all_messages = [{"role": "user", "content": f'Previous context if needed: {str(query_response)}'}]
-    all_messages.extend(messages)
-
-    print(all_messages)
-    
-    return all_messages    
 
 def lambda_handler(event, context):
     if ("user_message" in event and "user_phone_number" in event and
