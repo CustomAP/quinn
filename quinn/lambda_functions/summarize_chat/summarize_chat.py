@@ -1,13 +1,14 @@
-import os
 import boto3
 from botocore.exceptions import ClientError
 import json
 import logging
 import yaml
+import datetime
 from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
 from helper_functions.llm_wrapper.open_ai.embeddings.embeddings import openai_embeddings
 from helper_functions.pinecone.index_actions import upsert_index
 from helper_functions.messages.format import format_messages_for_summary
+from helper_functions.datetime.format import date_string_to_timestamp
 
 
 dynamodb = boto3.resource("dynamodb")
@@ -38,7 +39,13 @@ def lambda_handler(event, context):
                 vectors = []
                 for response in response_json:
                     for key, value in response.items():
-                        vectors.append({"id": value, "values": openai_embeddings(value)})
+                        vectors.append({
+                            "id": value,
+                            "values": openai_embeddings(value), 
+                            "metadata" : {
+                                "date": date_string_to_timestamp(datetime.datetime.now().strftime("%m-%d-%Y"))
+                                }
+                            })
 
                 upsert_index(phone_number, vectors)
                 
