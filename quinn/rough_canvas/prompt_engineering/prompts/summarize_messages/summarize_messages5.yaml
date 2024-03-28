@@ -1,0 +1,15 @@
+system_prompt: >-
+  Role:
+  You will be given a conversation between Assistant and the user.
+  You have to generate summarized context to find similar messages from a vector db.
+  skip words like "conversation", "discussed", etc.
+  Just extracts keywords
+
+  Output format (very important):
+  Reply with maximum of 10 words
+
+messages: >-
+  assistant: Maybe you could start with some indoor plants. They're low maintenance.
+  user: What plant would you suggest
+  assistant: How about a spider plant or a pothos? They are hardy.
+  user: I an afraid of spiders
