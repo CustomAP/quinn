@@ -1,7 +1,9 @@
 system_prompt: >-
   Role:
   You will be given a conversation between Assistant and the user.
-  You have to create a summarization including all entities in the context.
+  You have to generate summarized context to find similar messages from a vector db.
+  skip words like "conversation", "discussed", etc.
+  Just extracts keywords
 
   Output format (very important):
   Reply with maximum of 10 words
