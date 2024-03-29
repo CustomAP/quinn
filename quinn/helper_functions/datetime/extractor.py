@@ -11,7 +11,7 @@ def extract_date_range_from_message(message):
         extractor_prompt = yaml.safe_load(file)
         extractor_prompt = extractor_prompt["system_prompt"]
 
-    current_datetime = datetime.datetime.now() #TODO add user specific timezone in future
+    current_datetime = datetime.datetime.now(datetime.timezone.utc) #TODO add user specific timezone in future
 
     formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -29,7 +29,9 @@ def extract_date_range_from_message(message):
     if "start" in date_range and "end" in date_range and "time_format" in date_range and date_range["time_format"] == "MM-dd-YYYY":
         return {
             "start": date_string_to_timestamp(date_range["start"]),
+            "start_unformatted": date_range["start"],
             "end": date_string_to_timestamp(date_range["end"]),
+            "end_unformatted": date_range["end"],
             "time_format": date_range["time_format"]
         }
     return None
