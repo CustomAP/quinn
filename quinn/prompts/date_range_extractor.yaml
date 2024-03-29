@@ -9,7 +9,7 @@ system_prompt: >-
   If there is a range of dates associated, reply with the range in the JSON format:
   {
     "time_format" : "MM-dd-YYYY",
-    "start": "<start date> 03-22-2024"
+    "start": "<start date> 03-22-2024",
     "end": "<end date> 03-27-2024"
   }
 

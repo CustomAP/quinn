@@ -25,12 +25,19 @@ def get_summary(summarize_prompt, formatted_message):
 
     return response["message"]
 
-def get_similar_messages(summary, user_phone_number):
-
+def get_similar_messages(summary, user_phone_number, date_range):
     query_embeddings = openai_embeddings(summary)
 
-    query_response = query_index(user_phone_number, query_embeddings)
-    return query_response
+    query_response_without_metadata = query_index(user_phone_number, query_embeddings)
+    query_response_with_metadata = None
+    if date_range is not None:
+        filter = {
+            "$and": [
+                    {"date": {"$gte": date_range["start"]}},
+                    {"date": {"$lte": date_range["end"]}}
+                ]}
+        query_response_with_metadata = query_index(user_phone_number, query_embeddings, filter=filter)
+    return (query_response_without_metadata, query_response_with_metadata)
 
 def get_messages_with_context(user_phone_number, messages):
     summarize_prompt = get_system_prompt()
@@ -42,13 +49,20 @@ def get_messages_with_context(user_phone_number, messages):
 
     print("Summary: " + summary)
 
-    date_range = extract_date_range_from_message(formatted_message) #TODO: use this range while quering vector db
+    date_range = extract_date_range_from_message(formatted_message)
 
-    similar_messages = get_similar_messages(summary, user_phone_number)
+    print("Date range: " + str(date_range))
+
+    similar_messages_without_metadata, similar_messages_with_metadata = get_similar_messages(summary, user_phone_number, date_range)
     
-    print("Similar messages: " + str(similar_messages))
-
-    all_messages = [{"role": "user", "content": f'Previous context if needed: {str(similar_messages)}'}]
+    print("Similar messages without metadata: " + str(similar_messages_without_metadata))
+    print("Similar messages with metadata: " + str(similar_messages_with_metadata))
+    
+    content = f'Previous context if needed:\n'
+    if similar_messages_with_metadata is not None:
+        content += f"Context between {date_range['start_unformatted']} and {date_range['end_unformatted']} : {str(similar_messages_with_metadata)}\n"
+    content += f"General context from past conversations: {str(similar_messages_without_metadata)}"
+    all_messages = [{"role": "user", "content": content}]
     all_messages.extend(messages)
     
     return all_messages 

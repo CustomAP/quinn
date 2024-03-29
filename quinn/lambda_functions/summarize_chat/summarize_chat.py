@@ -43,7 +43,7 @@ def lambda_handler(event, context):
                             "id": value,
                             "values": openai_embeddings(value), 
                             "metadata" : {
-                                "date": date_string_to_timestamp(datetime.datetime.now().strftime("%m-%d-%Y"))
+                                "date": date_string_to_timestamp(datetime.datetime.now(datetime.timezone.utc).strftime("%m-%d-%Y"))
                                 }
                             })
 
