@@ -4,7 +4,7 @@ import logging
 import yaml
 import datetime
 from helper_functions.llm_wrapper.stateless.stateless_call import stateless_llm_call
-from helper_functions.logging.logging_event import log_event_for_user, create_log_stream
+from helper_functions.logging.logging_event import log_event_for_user, log_exception_for_user, create_log_stream
 from helper_functions.whatsapp.whatsapp_response import send_error_response, send_success_response
 from lambda_functions.process_message.context_augmenter.context_augmenter import get_messages_with_context
 
@@ -63,7 +63,7 @@ def lambda_handler(event, context):
         
         global function_name
         function_name = context.function_name
-        
+
         try:
             create_log_stream(user_phone_number, context.function_name)
 
@@ -102,8 +102,7 @@ def lambda_handler(event, context):
                 log_event_for_user(user_phone_number, function_name, "Failed to receive LLM response: " + str(response["message"]))
                 send_error_response(phone_number_id, token, from_number)
         except Exception as e:
-            print(str(e))
-            log_event_for_user(user_phone_number, function_name, "Exception in processing message: " + str(e))
+            log_exception_for_user(user_phone_number, function_name, e)
             send_error_response(phone_number_id, token, from_number)
     else:
         logger.setLevel('INFO')

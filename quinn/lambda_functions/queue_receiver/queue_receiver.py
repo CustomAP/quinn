@@ -2,7 +2,7 @@ import boto3
 import datetime
 import time
 import json
-from helper_functions.logging.logging_event import log_event_for_user, create_log_stream
+from helper_functions.logging.logging_event import log_event_for_user, log_exception_for_user, create_log_stream
 import logging
 
 dynamodb = boto3.resource("dynamodb")
@@ -84,7 +84,7 @@ def process_messages(user_phone_number, phone_number_id, token, from_number):
         )
         
     except Exception as e:
-        log_event_for_user(user_phone_number, function_name, "Exception in invoking message processing during polling: " + str(e))
+        log_exception_for_user(user_phone_number, function_name, e)
         return {
             'statusCode' : 500
         }    
@@ -117,11 +117,10 @@ def poll(queue_url, user_phone_number, phone_number_id, token, from_number):
                     if action(queue_url, user_phone_number, phone_number_id, token, from_number):
                         break
                 except Exception as e:
-                    log_event_for_user(user_phone_number, function_name, "Exception in polling queue: " + str(e))
-                    update_table(user_phone_number)
+                    log_exception_for_user(user_phone_number, function_name, e)
                     break
     except Exception as e:
-        log_event_for_user(user_phone_number, function_name, "Exception in polling queue: " + str(e))
+        log_exception_for_user(user_phone_number, function_name, e)
         return {
             'statusCode' : 500
         }
@@ -147,7 +146,7 @@ def lambda_handler(event, context):
         log_event_for_user(user_phone_number, function_name, "Last polling time for queue " + queue_url + " : " + str(last_poll_time))
         poll(queue_url, user_phone_number, phone_number_id, token, from_number)
     except Exception as e:
-        log_event_for_user(user_phone_number, function_name, "Exception in queue receiver: " + str(e))
+        log_exception_for_user(user_phone_number, function_name, e)
         return {
             'statusCode': 500
         }

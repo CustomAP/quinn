@@ -1,7 +1,7 @@
 import json
 import os
 import boto3
-from helper_functions.logging.logging_event import log_event_for_user, create_log_stream
+from helper_functions.logging.logging_event import log_event_for_user, log_exception_for_user, create_log_stream
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
@@ -106,7 +106,7 @@ def lambda_handler(event, context):
                     "statusCode": 200
                 }
     except Exception as e:
-            log_event_for_user(user_phone_number, function_name, "Exception in conversation handler: " + str(e))
+            log_exception_for_user(user_phone_number, function_name, e)
             return {
                 'statusCode': 500
                 }
