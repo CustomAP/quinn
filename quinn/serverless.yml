@@ -12,7 +12,7 @@ provider:
     stage: ${opt:stage, 'dev'}
     openai_access_key: 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
     pinecone_access_key: b248c5b4-76ea-46f2-8440-8fdc9886428b
-    WHATSAPP_TOKEN: EAAFpnO7WYJUBO2aDlMPtnNTCMupRRLCsEveZCfN2xCmL7bqTKRTChxbFbh2LrW4LKZAxJYhR3TlLKnZCNvYI0AFviNTSfxxiGgvqXGyM0351eH4wxjCNQeYqrD1UlAuTrRShDrmJaHNr2y7KK9F2cguEa8fhLdboD0p8ZCGZCblC36smaAKP9RhgJrqCF4Q7YSTMLvBqN3QRZBE1y9gUUZD
+    WHATSAPP_TOKEN: EAAFpnO7WYJUBOyLkDGpr2r0UMkiibG0bJSRPTmESNTwF1HCYNOxporRCmazASLLm6vTz5pGS8ZCisXIalzL5pjq3vLbNZBFhvZAAvSQYchW8WnUjAxcGPpZAn0XNv9ceY2naFkC21O1eHxyQAUiYR9pkDjSfJGDMWNTON3IgUaoXL7bShSxeEME1DY54wIpk6XfwPF617zif9LSrXzQK
     VERIFY_TOKEN: QUINN
     openai_organization_id: org-nQnTgti1i8GBtV2AImNwhkCW
     quinn_assistant_id: asst_JGVfvgYliLwfYcBag9inMPcQ
@@ -21,6 +21,7 @@ provider:
     llm: openai
     anthropic_model: claude-3-haiku-20240307
     openai_model: gpt-3.5-turbo
+    logger_env: ${opt:env, 'cloud'}
 
 functions:
   process_message:

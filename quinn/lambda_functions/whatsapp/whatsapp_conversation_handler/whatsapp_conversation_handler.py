@@ -1,8 +1,7 @@
 import json
 import os
 import boto3
-import logging
-from helper_functions.logging.logging_event import log_event_for_user, create_log_group, create_log_stream
+from helper_functions.logging.logging_event import log_event_for_user, log_exception_for_user, create_log_stream
 
 lambdaClient = boto3.client("lambda")
 sqs = boto3.client('sqs')
@@ -11,6 +10,7 @@ aggregate_interval = 2
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table('users')
+function_name = None
 
 def trigger_queue_receiver(queue_url, user_phone_number, phone_number_id, token, from_number):
     user = table.get_item(Key={"phone_number": user_phone_number})
@@ -86,27 +86,27 @@ def lambda_handler(event, context):
                     body["entry"][0]["changes"][0].get("value").get("contacts")[0]["wa_id"]):
                 phone_number_id, display_phone_number, from_number, msg_body, user_phone_number, message_id = extract_data(body)
 
+                global function_name
                 function_name = context.function_name
 
-                log_group_name = create_log_group(user_phone_number)
-                log_stream_name = create_log_stream(user_phone_number, function_name)
+                create_log_stream(user_phone_number, function_name)
                 
-                log_event_for_user(log_group_name, log_stream_name, "Original message from user: " + msg_body)
+                log_event_for_user(user_phone_number, function_name, "Original message from user: " + msg_body)
 
-                log_event_for_user(log_group_name, log_stream_name, "Creating/Retriving queue for user")
+                log_event_for_user(user_phone_number, function_name, "Creating/Retriving queue for user")
                 queue_url = get_or_create_sqs_queue(user_phone_number)
 
-                log_event_for_user(log_group_name, log_stream_name, "Triggering polling for queue: " + queue_url)
+                log_event_for_user(user_phone_number, function_name, "Triggering polling for queue: " + queue_url)
                 trigger_queue_receiver(queue_url, user_phone_number, phone_number_id, token, from_number)
 
-                log_event_for_user(log_group_name, log_stream_name, "Adding message to the queue.")
+                log_event_for_user(user_phone_number, function_name, "Adding message to the queue.")
                 send_message_to_sqs(queue_url, msg_body, user_phone_number, message_id)
                 
                 return {
                     "statusCode": 200
                 }
     except Exception as e:
-            log_event_for_user(log_group_name, log_stream_name, "Exception in conversation handler: " + str(e))
+            log_exception_for_user(user_phone_number, function_name, e)
             return {
                 'statusCode': 500
                 }
