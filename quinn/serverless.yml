@@ -12,7 +12,7 @@ provider:
     stage: ${opt:stage, 'dev'}
     openai_access_key: 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
     pinecone_access_key: b248c5b4-76ea-46f2-8440-8fdc9886428b
-    WHATSAPP_TOKEN: EAAFpnO7WYJUBOyLkDGpr2r0UMkiibG0bJSRPTmESNTwF1HCYNOxporRCmazASLLm6vTz5pGS8ZCisXIalzL5pjq3vLbNZBFhvZAAvSQYchW8WnUjAxcGPpZAn0XNv9ceY2naFkC21O1eHxyQAUiYR9pkDjSfJGDMWNTON3IgUaoXL7bShSxeEME1DY54wIpk6XfwPF617zif9LSrXzQK
+    WHATSAPP_TOKEN: EAAFpnO7WYJUBOZCXYgviE6TCnnvTwRfvniUCa7kGDe6fLkQC71Pa879GSZCd9Rs9xIcuCtEuYjn86wZAYyKK0h8O6Uyn1JSJEZB3iiM8fTH8Kn80ISmRBG43OsRZAUpMZAPNLvfUEhnlerAsq5ShjQhvVAxddW5ZCYMk17wAsjGWSG0hkoOU6gmZBBkhBwXteZC0ybYUAYmriyfqRKEh2HxG7
     VERIFY_TOKEN: QUINN
     openai_organization_id: org-nQnTgti1i8GBtV2AImNwhkCW
     quinn_assistant_id: asst_JGVfvgYliLwfYcBag9inMPcQ

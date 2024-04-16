@@ -9,6 +9,7 @@ from helper_functions.llm_wrapper.open_ai.embeddings.embeddings import openai_em
 from helper_functions.pinecone.index_actions import upsert_index
 from helper_functions.messages.format import format_messages_for_summary
 from helper_functions.datetime.format import date_string_to_timestamp
+from helper_functions.datetime.extractor import extract_date_range_from_message
 
 
 dynamodb = boto3.resource("dynamodb")
@@ -39,11 +40,12 @@ def lambda_handler(event, context):
                 vectors = []
                 for response in response_json:
                     for key, value in response.items():
+                        time_range = extract_date_range_from_message(value)
                         vectors.append({
                             "id": value,
                             "values": openai_embeddings(value), 
                             "metadata" : {
-                                "date": date_string_to_timestamp(datetime.datetime.now(datetime.timezone.utc).strftime("%m-%d-%Y"))
+                                "date": time_range["start"]
                                 }
                             })
 
